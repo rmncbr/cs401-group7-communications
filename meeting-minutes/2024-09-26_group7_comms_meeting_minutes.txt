@@ -1,15 +1,15 @@
 ### Meeting Minutes (11:30am - 1pm)
 
-**Date**: September 26, 2024
+Date: September 26, 2024
 
-**Attendees**: Joseph, Marcos, Roman, Salvador, Isaiah
+Attendees: Joseph, Marcos, Roman, Salvador, Isaiah
 
-**Agenda**:
+Agenda:
 
 1. Share documents (SRS)
 2. Brainstorm ideas for Phase 1 (Actors, Class Candidates, Use Cases)
 
-**Discussion Points**:
+Discussion Points:
 
 - SRS shared
 - Platform to be used for Project Schedule
@@ -18,7 +18,7 @@
 - Actions / Use Cases
 - Modules built
 
-**Decisions Made**:
+Decisions Made:
 
 - Class Candidates
 - UserManager acts as Login Manager
@@ -28,23 +28,23 @@
 
 ### Action Items:
 
-1. **A001: Sequence Diagram**
-    - **Assigned to**: Marcos
-    - **Due Date**: October 2, 2024
-    - **Details**: To do
-2. **A002: Class Diagram**
-    - **Assigned to**: Joseph
-    - **Due Date**: October 2, 2024
-    - **Details**: To do
-3. **A003: Project Schedule**
-    - **Assigned to**: Salvador
-    - **Due Date**: October 2, 2024
-    - **Details**: To do
-4. **A004: Use Case Diagram**
-    - **Assigned to**: Roman
-    - **Due Date**: October 2, 2024
-    - **Details**: To do
-5. **A005: Software Requirements Specification**
-    - **Assigned to**: All members
-    - **Due Date**: October 2, 2024
-    - **Details**: To do
+1. A001: Sequence Diagram
+    - Assigned to: Marcos
+    - Due Date: October 2, 2024
+    - Details: To do
+2. A002: Class Diagram
+    - Assigned to: Joseph
+    - Due Date: October 2, 2024
+    - Details: To do
+3. A003: Project Schedule
+    - Assigned to: Salvador
+    - Due Date: October 2, 2024
+    - Details: To do
+4. A004: Use Case Diagram
+    - Assigned to: Roman
+    - Due Date: October 2, 2024
+    - Details: To do
+5. A005: Software Requirements Specification
+    - Assigned to: All members
+    - Due Date: October 2, 2024
+    - Details: To do
