@@ -1,0 +1,50 @@
+### Meeting Minutes (11:30am - 1pm)
+
+**Date**: September 26, 2024
+
+**Attendees**: Joseph, Marcos, Roman, Salvador, Isaiah
+
+**Agenda**:
+
+1. Share documents (SRS)
+2. Brainstorm ideas for Phase 1 (Actors, Class Candidates, Use Cases)
+
+**Discussion Points**:
+
+- SRS shared
+- Platform to be used for Project Schedule
+- Top 5 class candidates (Server, Client, User, Chatroom, Message)
+- Actors for diagrams (User, Admin, Chatroom Manager, User Manager)
+- Actions / Use Cases
+- Modules built
+
+**Decisions Made**:
+
+- Class Candidates
+- UserManager acts as Login Manager
+- Chatroom Manager to save chat data to logs
+- Log Manager for Admin to retrieve logs
+- LogHolder class added
+
+### Action Items:
+
+1. **A001: Sequence Diagram**
+    - **Assigned to**: Marcos
+    - **Due Date**: October 2, 2024
+    - **Details**: To do
+2. **A002: Class Diagram**
+    - **Assigned to**: Joseph
+    - **Due Date**: October 2, 2024
+    - **Details**: To do
+3. **A003: Project Schedule**
+    - **Assigned to**: Salvador
+    - **Due Date**: October 2, 2024
+    - **Details**: To do
+4. **A004: Use Case Diagram**
+    - **Assigned to**: Roman
+    - **Due Date**: October 2, 2024
+    - **Details**: To do
+5. **A005: Software Requirements Specification**
+    - **Assigned to**: All members
+    - **Due Date**: October 2, 2024
+    - **Details**: To do
