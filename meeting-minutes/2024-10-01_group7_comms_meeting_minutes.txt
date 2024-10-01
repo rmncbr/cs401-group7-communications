@@ -1,6 +1,6 @@
 ### Meeting Minutes (11:40am - 1pm)
 
-Date: October 10, 2024 
+Date: October 1, 2024 
 
 Attendees: Joseph, Marcos, Roman, Salvador, Isaiah (online)
 
@@ -12,7 +12,7 @@ Agenda:
 
 Discussion Points:
 
-- UML Diagrams (Sequence Diagram , Use Case Diagram TBD, Class Diagram complete.
+- UML Diagrams (Sequence Diagram , Use Case Diagram TBD, Class Diagram complete.)
 - Requirements for Server/Client.
 
 Decisions Made:
