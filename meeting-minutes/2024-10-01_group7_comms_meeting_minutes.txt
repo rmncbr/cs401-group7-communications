@@ -1,0 +1,40 @@
+### Meeting Minutes (11:40am - 1pm)
+
+Date: October 10, 2024 
+
+Attendees: Joseph, Marcos, Roman, Salvador, Isaiah (online)
+
+Agenda:
+
+1. Review progresses made since last meeting.
+2. List questions for the customer.
+3. Work on SRS.
+
+Discussion Points:
+
+- UML Diagrams (Sequence Diagram , Use Case Diagram TBD, Class Diagram complete.
+- Requirements for Server/Client.
+
+Decisions Made:
+
+- Presentation slides to be initialized next day.
+- Passwords able to be changed by Users once issued by Administrator.
+- Chatroom access will be exclusive to groups and not open to all users.
+- Idea of Chatroom ownership discarded as Administrator is able to view all chat rooms.
+- User Manager will authenticate users for login and adding users to the list of total users.
+- Chatrooms will be discarded once all Users have left.
+
+### Action Items:
+
+1. A001: Presentation slides
+    - Assigned to: All members
+    - Due Date: October 2, 2024
+    - Details: To Do
+2. A002: Complete SRS
+    - Assigned to: All members
+    - Due Date: October 3, 2024
+    - Details: Specific Requirements, Use Case Diagram, Sequence Diagram
+3. A003: Prepare Deliverables
+    - Assigned to: All members
+    - Due Date: October 3, 2024
+    - Details: SRS, Presentation Slides Meeting Minutes, Github Link
