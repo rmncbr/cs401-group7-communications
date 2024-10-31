@@ -1,0 +1,33 @@
+### Meeting Minutes
+
+Date: October 29, 2024
+
+Attendees: Joseph, Marcos, Roman, Salvador, Isaiah
+
+Agenda:
+
+1. Review phase 2 progress
+2. Review UML diagrams 
+
+Discussion Points:
+
+- User to User synchronous message delivery
+- Users can freely change their passwords without verification from an Admin
+- Who is able to delete chatrooms?
+
+Decisions Made:
+
+- A chatroom must first be made by a User to communicate synchronously, even if it is User to User
+- Users can freely change their passwords without verification from an Admin
+- Administrators solely delete chatrooms, logs remain unchanged.
+
+### Action Items:
+
+1. A001: Sequence Diagrams
+    - Assigned to: Marcos
+    - Due Date: October 31, 2024
+    - Details: Make changes from previous sequence diagram.
+2. A002: Phase 2 Presentation Slides
+    - Assigned to: All members
+    - Due Date: October 31, 2024
+    - Details: Demonstrate design document
