@@ -16,6 +16,7 @@ CSUEB Fall 2024 CS401 Software Engineering Group 7 Communications Project
 2. **Clone the Repository**  
    - In the **Git Repositories** view, select **Clone a Git Repository**.
    - **Clone URL**: Paste this project’s Git URL in the **URL** text box.
+   - The picture below is an example, the URL used is from a fork.
 
    ![Clone Repository dialog](https://github.com/user-attachments/assets/29c59f92-4e9c-4926-b639-5b35c1c1850a)
 
