@@ -1,8 +1,9 @@
 package shared;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class Message {
+public class Message implements Serializable{
 	private String contents;
 	private Date dateSent;
 	private String toUserName;
@@ -10,12 +11,25 @@ public class Message {
 	private String fromUserName;
 	private int fromUserID;
 	private int toChatroom;
-	private static int messageIDCounter;
+	private static int messageIDCounter = 0;
 	private	int messageID;
 	private MessageType messageType;
 	
+	/*
+	private User user;
+	private ConcurrentMap<Integer, Chatroom> chatroomMap;
+	private ConcurrentMap<Integer, String> userMap;
+	*/
+	
 	public Message(MessageCreator messageCreator) {
-		
+		this.contents = messageCreator.getContents();
+		this.dateSent = new Date();
+		this.toUserName = messageCreator.getToUserName();
+		this.toUserID = messageCreator.getToUserID();
+		this.fromUserName = messageCreator.getFromUserName();
+		this.toChatroom = messageCreator.getChatroom();
+		this.messageID = messageIDCounter++;
+		this.messageType = messageCreator.getMessageType();
     
 	}
 	
