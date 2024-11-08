@@ -59,17 +59,29 @@ public class MessageCreator {
 		return this.contents;
 	}
 	
-	public String getUserName() {
+	public String getToUserName() {
 		return this.toUserName;
 	}
 	
-	public int getUserID() {
+	public int getToUserID() {
 		return this.toUserID;
 	}
 	
+	public String getFromUserName() {
+		return this.fromUserName;
+	}
+	
+	public int getFromUserID() {
+		return this.fromUserID;
+	}
+	
+	public MessageType getMessageType() {
+		return this.messageType;
+	}
 	public Integer getChatroom() {
 		return this.toChatroom;
 	}
+	
 	
 	// Get user function
 	
@@ -83,6 +95,7 @@ public class MessageCreator {
 		Message message = new Message(this);
 		return message;
 	}
+	
 	
 	
 	

@@ -1,15 +1,16 @@
-package client;
+package testing;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import shared.*;
 
-public class Client {
+public class ConsoleClient {
 	
-	private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
+	private ConsoleUI consoleUI;
 	private Socket serverSocket;
 	private String serverIP;
 	private int serverPort;
@@ -19,8 +20,8 @@ public class Client {
 
 	private ConcurrentLinkedQueue<Message> messageQueue = new ConcurrentLinkedQueue<Message>();
 	
-	public Client(ClientUI gui) {
-		clientGui = gui;
+	public ConsoleClient(ConsoleUI ui) {
+		consoleUI = ui;
 	}
 	
 	/* Attempts to establish a two way connection with the server */
@@ -104,7 +105,7 @@ public class Client {
 		}
 	}
 	
-	/* Thread takes Messages from the messageQueue & Processes them based on Message Type */
+	/* Takes Messages from the messageQueue & Processes them based on Message Type */
 	private class readMessages implements Runnable {
 		
 		@Override
@@ -128,55 +129,55 @@ public class Client {
 							}
 						}
 						
-						clientGui.initUpdate(message);
+						consoleUI.initUpdate(message);
 						break;
 					case LOGOUT:
 						// confirm message
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case ADDUSER:
 						// confirm message	
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case DELUSER:
 						// confirm message
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case CPWD:
 						// confirm message
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case GUL:
 						// message w/ log contents
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case GCL:
 						// message w/ log contents
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case CC:
 						// messge w/ chatroom id
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case IUC:
 						// message w/ chatroom
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case JC:
 						// message w/ chatroom
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case LC:
 						// confirm message
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case UTU:
 						// message w/ message contents & info
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					case UTC:
 						// message w/ message contents add to chatroom
-						clientGui.update(message);
+						consoleUI.update(message);
 						break;
 					default:
 						break;
