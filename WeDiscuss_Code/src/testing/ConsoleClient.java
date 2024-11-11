@@ -16,7 +16,7 @@ public class ConsoleClient {
 	private int serverPort;
 	private ObjectOutputStream toServer;
 	private ObjectInputStream fromServer;
-	
+	private volatile Boolean connected = false; // All threads can access this boolean!
 
 	private ConcurrentLinkedQueue<Message> messageQueue = new ConcurrentLinkedQueue<Message>();
 	
@@ -24,9 +24,14 @@ public class ConsoleClient {
 		consoleUI = ui;
 	}
 	
+	public String getServerIP() {return this.serverIP;}
+	
+	public int getServerPort() {return this.serverPort;}
+	
 	/* Attempts to establish a two way connection with the server */
 	public void connectToServer(String serverIP, int serverPort) throws IOException {
 		try {
+			connected = true;
 			this.serverIP = serverIP;
 			this.serverPort = serverPort;
 			serverSocket = new Socket(serverIP, serverPort);
@@ -34,6 +39,7 @@ public class ConsoleClient {
 			fromServer = new ObjectInputStream(serverSocket.getInputStream());
 			
 			System.out.println("Connected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
+			
 			
 			// Listener thread to listen for messages
 			new Thread(new listenForMessages()).start();
@@ -43,6 +49,7 @@ public class ConsoleClient {
 		}
 		catch(IOException e) {
 			System.out.println("Failed to Connect to Server!");
+			connected = false;
 			throw e;
 		}
 		
@@ -58,6 +65,18 @@ public class ConsoleClient {
 		
 	}
 	
+	public void sendLogoutRequest() throws IOException {
+		MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
+		
+		Message message = messageCreator.createMessage();
+		
+		sendMessage(message);
+	}
+	
+	public void UTU(Message message) throws IOException {
+		sendMessage(message);
+	}
+	
 	private void sendMessage(Message message) throws IOException {
 		try {
 			toServer.writeObject(message);
@@ -69,16 +88,18 @@ public class ConsoleClient {
 	}
 	
 	private void reconnect() throws IOException{
-		// Close the old socket
+		// Close the old socket & Associated resources
 		if(serverSocket != null && !serverSocket.isClosed()) {
-			serverSocket.close();
+			closeResources();
 		}
 		
+		connected = true;
 		serverSocket = new Socket(serverIP, serverPort);
 		toServer = new ObjectOutputStream(serverSocket.getOutputStream());
 		fromServer = new ObjectInputStream(serverSocket.getInputStream());
 		
 		System.out.println("Reconnected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
+		
 		
 		// Listener thread to listen for messages
 		new Thread(new listenForMessages()).start();
@@ -94,12 +115,15 @@ public class ConsoleClient {
 		public void run(){
 			try {
 				while(true) {
+					if(!connected) break;
 					Message message = (Message) fromServer.readObject();
 					messageQueue.add(message);
 				}
 			}
 			catch(IOException | ClassNotFoundException e) {
+				connected = false;
 				System.out.println("Lost connection to server!");
+				closeResources();
 			}
 			
 		}
@@ -111,12 +135,14 @@ public class ConsoleClient {
 		@Override
 		public void run() {
 			while(true) {
+				if(!connected) break;
 				Message message = messageQueue.poll();
-				if(message == null) continue;
+				if(message == null) {
+					continue;
+				}
 				
 				MessageType type = message.getMessageType();
 				
-				/* NOTE: Should the logic be in the switch statements? */
 				switch(type) {
 					case LOGIN:
 						// Login fail so try reconnect to server
@@ -125,14 +151,16 @@ public class ConsoleClient {
 								reconnect();
 							} catch (IOException e) {
 								System.err.println("Error reconnecting to Server");
+								closeResources();
 								e.printStackTrace();
 							}
 						}
-						
 						consoleUI.initUpdate(message);
 						break;
 					case LOGOUT:
-						// confirm message
+						if(message.getContents().equals("SUCCESS")) {
+							connected = false;
+						}
 						consoleUI.update(message);
 						break;
 					case ADDUSER:
@@ -181,13 +209,34 @@ public class ConsoleClient {
 						break;
 					default:
 						break;
-				}
-					
+				}	
 			}
+			
+			System.out.println("Connection with server lost, processing messages in queue...");
+			// Connection has been lost, process rest of messages in queue before quitting
+			while(!messageQueue.isEmpty()) {
+				Message message = messageQueue.poll();
+				if(message != null) {
+					consoleUI.update(message);
+				}
+			}
+			
+			System.out.println("All messages processed, ending client");
+			closeResources();
 		}
 	}
-
 	
+	private void closeResources() {
+		try {
+			if(toServer != null) toServer.close();
+			if(fromServer != null) fromServer.close();
+			if(serverSocket != null) serverSocket.close();
+		}
+		catch(IOException e) {
+			System.err.println("Error closing resources!");
+			e.printStackTrace();
+		}
+	}
 	
 	
 	
