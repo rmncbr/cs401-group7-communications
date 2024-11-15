@@ -12,7 +12,6 @@ import server.User;
 import shared.*;
 
 public class ConsoleUI {
-	private User user = null;
 	private ArrayList<Message> userMessages = null;
 	private ConcurrentHashMap<Integer, Chatroom> chatrooms = null;
 	private ConcurrentHashMap<Integer, String> userMap = null;

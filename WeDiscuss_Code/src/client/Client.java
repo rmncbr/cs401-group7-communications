@@ -5,11 +5,13 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import server.User;
 import shared.*;
 
 public class Client {
 	
 	private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
+	private User user = null;
 	private Socket serverSocket;
 	private String serverIP;
 	private int serverPort;
@@ -57,22 +59,138 @@ public class Client {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGIN);
 		messageCreator.setContents(userName + "|" + password);
 		
-		Message message = messageCreator.createMessage();
-		
-		sendMessage(message);
+		sendMessage(messageCreator.createMessage());
 		
 	}
 	
 	public void sendLogoutRequest() throws IOException {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
 		
-		Message message = messageCreator.createMessage();
+		/*
+		if(user != null) {
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
 		
-		sendMessage(message);
+		sendMessage(messageCreator.createMessage());
 	}
 	
-	public void UTU(Message message) throws IOException {
-		sendMessage(message);
+	public void sendPasswordChangeRequest(String userName, String password) throws IOException{
+		/*
+		if(user != null) {
+			if(user.getAdminStatus || user.getUserName == userName) {
+				//messageCreator.setFromUserName(user.getUserName());
+				//messageCreator.setFromUserID(user.getUserID());
+			}
+			else return // Not an admin & not the user's account!
+		}
+		*/
+		
+		MessageCreator messageCreator = new MessageCreator(MessageType.CPWD);
+		messageCreator.setContents(userName + "|" + password);
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void sendMessageToUser(String message, String toUserName, int toUserID) throws IOException {
+		MessageCreator messageCreator = new MessageCreator(MessageType.UTU);
+		
+		messageCreator.setContents(message);
+		messageCreator.setToUserName(toUserName);
+		messageCreator.setToUserID(toUserID);
+		/*
+		if(user != null) {
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void sendMessageToChatroom(String message, int chatroomID) throws IOException{
+		MessageCreator messageCreator = new MessageCreator(MessageType.UTC);
+		
+		messageCreator.setContents(message);
+		messageCreator.setToChatroom(chatroomID);
+		
+		/*
+		if(user != null) {
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void getChatroom(int chatroomID) throws IOException {
+		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		messageCreator.setToChatroom(chatroomID);
+		
+		/*
+		if(user != null) {
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void getMessageLogs(String userName) throws IOException {
+		/*
+		if(user != null) {
+			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		messageCreator.setToUserName(userName);
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void getChatLogs(int chatroomID) throws IOException {
+		/*
+		if(user != null) {
+			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		messageCreator.setToChatroom(chatroomID);
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void addUser(String userName, String password) throws IOException {
+		/*
+		if(user != null) {
+			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		MessageCreator messageCreator = new MessageCreator(MessageType.ADDUSER);
+		messageCreator.setToUserName(userName);
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void deleteUser(String userName, String password) throws IOException {
+		/*
+		if(user != null) {
+			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			//messageCreator.setFromUserName(user.getUserName());
+			//messageCreator.setFromUserID(user.getUserID());
+		}
+		*/
+		MessageCreator messageCreator = new MessageCreator(MessageType.DELUSER);
+		messageCreator.setToUserName(userName);
+		
+		sendMessage(messageCreator.createMessage());
 	}
 	
 	private void sendMessage(Message message) throws IOException {

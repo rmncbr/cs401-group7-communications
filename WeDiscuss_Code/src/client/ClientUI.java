@@ -7,7 +7,6 @@ import server.User;
 import shared.*;
 
 public class ClientUI {
-	private User user;
 	private ArrayList<Message> userMessages = new ArrayList<Message>();
 	private ConcurrentHashMap<Integer, Chatroom> chatrooms = new ConcurrentHashMap<Integer, Chatroom>();
 	private ConcurrentHashMap<Integer, String> userMap = new ConcurrentHashMap<Integer, String>();
