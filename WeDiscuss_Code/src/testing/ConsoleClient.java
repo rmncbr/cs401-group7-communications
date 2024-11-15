@@ -6,10 +6,12 @@ import java.net.Socket;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import server.User;
 import shared.*;
 
 public class ConsoleClient {
 	
+	private User user = null;
 	private ConsoleUI consoleUI;
 	private Socket serverSocket;
 	private String serverIP;
