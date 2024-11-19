@@ -4,82 +4,41 @@ import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import shared.*;
+
 
 public class Server {
 	private UserManager userManager;
 	private LogManager logManager;
 	private ChatroomManager chatroomManager;
-	private Map<Integer, Socket> listOfClients;
+	private ConcurrentHashMap<Integer, Socket> listOfClients;
 	
 	private ServerSocket serverSocket;
 	private int port;
+	private String serverIP;
 	private boolean running;
 	private ExecutorService executorService;
 	private static final int MAX_THREADS = 10;
 	
-	
-	
-	public Server(int port) {
+	public Server(int port) throws UnknownHostException {
 		this.port = port;
+		this.serverIP = InetAddress.getLocalHost().getHostAddress().trim();
 		this.running = false;
 		this.userManager = new UserManager();
 		this.logManager = new LogManager();
 		this.chatroomManager = new ChatroomManager();
-		this.listOfClients = new HashMap<>();
+		this.listOfClients = new ConcurrentHashMap<>();
 	
 		this.executorService = Executors.newFixedThreadPool(MAX_THREADS);
 	}
 	
 	
 	public void start() {
-		try {
-			serverSocket = new ServerSocket(port);
-			running = true;
-			System.out.println("Server started on port: " + port);
-			
-			while (running) {
-				System.out.println("Waiting for client connection...");
-				
-				//Accept client connection
-				Socket clientSocket = serverSocket.accept();
-				System.out.println("Client connected: " + clientSocket.getInetAddress());
-				
-				//create input/output streams for object transmission
-				ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
-				ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
-				
-				/*
-				try {
-					
-					//read message object from client
-					Message recievedMessage = (Message) input.readObject();
-					System.out.println("Message recieved from client: " + recievedMessage);
-					
-					//create and send response message
-					Message response = new Message();
-					response.setContent("Message successfully recieved by server");
-					output.writeObject(response);
-					output.flush();
-					
-				} catch (ClassNotFoundException e) {
-					System.err.println("Error reading message object: " + e.getMessage());
-				} finally {
-					//Close streams and socket
-					input.close();
-					output.close();
-					clientSocket.close();
-					
-				}
-				*/
-			}
-		} catch (IOException e) {
-			System.err.println("Server error: " + e.getMessage());
-			
-		} finally {
-			stop();
-		}
+		running = true;
+		// Starts thread that listens for incoming client connections
+		Thread listenThread = new Thread(() -> listenForConnections());
+		listenThread.start();
 	}
-	
 	
 	public void stop() {
 		running = false;
@@ -107,7 +66,7 @@ public class Server {
 		return chatroomManager;
 	}
 	
-	public Map<Integer, Socket> getListOfClients() {
+	public ConcurrentHashMap<Integer, Socket> getListOfClients() {
 		return listOfClients;
 	}
 	
@@ -122,25 +81,98 @@ public class Server {
 	public void listenForConnections() {
 		try {
 			serverSocket = new ServerSocket(port);
+			System.out.println("Server started on IPV4 Address: " +  serverIP + " Port: " + port);
 			while (true) {
 				Socket clientSocket = serverSocket.accept();
-				Thread clientThread = new Thread(() -> processResponse());
-				clientThread.start();
+				System.out.println("New Connection! From: " + clientSocket.getLocalSocketAddress());
+				Thread processThread = new Thread(() -> processResponse(clientSocket));
+				executorService.submit(processThread);
 			}
 		} catch (IOException e) {
 			System.err.println("Server connection error: " + e.getMessage());
 		}
+		finally {
+			stop();
+		}
 	}
 	
 	
-	public void processResponse() {
+	public void processResponse(Socket clientSocket) {
 		//Create appropriate Message objects and route them 
 		//to the correct handler based on message type
+		try {
+			
+			ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
+			ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
+			
+			while(running) {
+				
+				Message message = (Message) input.readObject();
+				
+				if(message == null) continue;
+				
+				System.out.println("Message recieved from client: " + message.getMessageType());
+				
+				MessageType type = message.getMessageType();
+				
+				// In the switch, new thread created for server component handler (logManager, userManager...)
+				// Or maybe this thread itself just does the work?
+				switch(type) {
+					case LOGIN:
+						
+						break;
+					case LOGOUT:
+		
+						break;
+					case ADDUSER:
+		
+						break;
+					case DELUSER:
+		
+						break;
+					case CPWD:
+		
+						break;
+					case GUL:
+						
+						break;
+					case GCL:
+						
+						break;
+					case CC:
+						
+						break;
+					case IUC:
+						
+						break;
+					case JC:
+						
+						break;
+					case LC:
+						
+						break;
+					case UTU:
+						
+						break;
+					case UTC:
+						
+						break;
+					default:
+						break;
+				}	
+			}
+			
+			System.out.println("All messages processed, ending server");
+			stop();
+		}
+		catch(IOException | ClassNotFoundException e) {
+			System.err.println("Error processing Client Message: " + e.getMessage());
+		}
 		
 	}
 	
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws UnknownHostException {
 		Server server = new Server(8080); //temp port for testing
 		server.start();
 	}

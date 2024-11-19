@@ -5,13 +5,11 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import server.User;
 import shared.*;
 
 public class Client {
 	
 	private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
-	private User user = null;
 	private Socket serverSocket;
 	private String serverIP;
 	private int serverPort;
@@ -145,7 +143,7 @@ public class Client {
 			//messageCreator.setFromUserID(user.getUserID());
 		}
 		*/
-		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		MessageCreator messageCreator = new MessageCreator(MessageType.GUL);
 		messageCreator.setToUserName(userName);
 		
 		sendMessage(messageCreator.createMessage());
@@ -159,7 +157,7 @@ public class Client {
 			//messageCreator.setFromUserID(user.getUserID());
 		}
 		*/
-		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		MessageCreator messageCreator = new MessageCreator(MessageType.GCL);
 		messageCreator.setToChatroom(chatroomID);
 		
 		sendMessage(messageCreator.createMessage());
