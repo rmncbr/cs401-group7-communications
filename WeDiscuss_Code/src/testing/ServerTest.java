@@ -10,12 +10,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import shared.*;
 
-/* Testing server, you can connect to it. CAN HANDLE:
- * - LOGIN messages
- * - LOGOUT messages
- * - Send UTU messages back & forth
- */
-
 public class ServerTest {
 	private static ConcurrentHashMap<Socket, String> clientSockets = new ConcurrentHashMap<Socket, String>();
 	private static String userName = "123";
