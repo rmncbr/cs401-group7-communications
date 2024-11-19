@@ -21,20 +21,16 @@ public class ClientUI extends JFrame {
 	private boolean isLoggedIn = false;
 	private ArrayList<Message> userMessages = new ArrayList<Message>();
 
-	JFrame mainFrame;
-	
-	JMenuBar menuBar;
-	JMenuItem loginItem;
-	JMenuItem logoutItem;
-	JMenuItem createChatroomItem;
-	JMenuItem joinChatroomItem;
-	JMenuItem inviteUserToChatroomItem;
-	JMenuItem leaveChatroomItem;
-	
+	JFrame mainFrame = new JFrame("WeDiscuss");
+
+	// menu bar items
+	JMenuBar menuBar = new JMenuBar();
+
 	// login fields
 	private JDialog loginDialog;
 	private JTextField usernameField;
 	private JPasswordField passwordField;
+	JTextArea loginTextArea = new JTextArea();
 
 	// swing components to display message and chatroom lists
 	private DefaultListModel<Message> privateMessagesModel;
@@ -54,17 +50,16 @@ public class ClientUI extends JFrame {
 
 	public ClientUI() {
 		client = new Client(this); // Init Client w/ this GUI
-		JFrame mainFrame = new JFrame("WeDiscuss");
+
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setSize(1100, 700);
-		appInitialize(mainFrame);
-		
-		updateMenuItems();
+		mainFrame.setVisible(false);
 	}// ClientUI()
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
 			ClientUI clientUI = new ClientUI();
+			clientUI.showLoginDialog();
 		});
 	}// main()
 
@@ -109,36 +104,56 @@ public class ClientUI extends JFrame {
 
 	private void showLoginDialog() {
 		loginDialog = new JDialog(mainFrame, "WeDiscuss Login", true); // Modal dialog
-		loginDialog.setSize(300, 200);
+		loginDialog.setSize(300, 150);
 		loginDialog.setLocationRelativeTo(mainFrame);
 
-		// Create login components
+		// Create the main panel with BorderLayout
 		JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(3, 2));
+		panel.setLayout(new BorderLayout());
 
+		// Create the input fields
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new FlowLayout());
 		JLabel usernameLabel = new JLabel("Username:");
-		usernameField = new JTextField();
+		usernameField = new JTextField(15);
 		JLabel passwordLabel = new JLabel("Password:");
-		passwordField = new JPasswordField();
-
+		passwordField = new JPasswordField(15);
 		JButton loginButton = new JButton("Login");
 		loginButton.addActionListener(new LoginButtonListener());
 
-		// Add components to the panel
-		panel.add(usernameLabel);
-		panel.add(usernameField);
-		panel.add(passwordLabel);
-		panel.add(passwordField);
-		panel.add(new JLabel()); // Empty label to align the button
-		panel.add(loginButton);
-		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+		// Add components to the input panel
+		inputPanel.add(usernameLabel);
+		inputPanel.add(usernameField);
+		inputPanel.add(passwordLabel);
+		inputPanel.add(passwordField);
+		inputPanel.add(new JLabel()); // Empty label to align the button
+		inputPanel.add(loginButton);
 
-		// Add panel to dialog
+		// Add the inputPanel to the center of the main panel
+		panel.add(inputPanel, BorderLayout.CENTER);
+
+		// Initialize the loginTextArea to show login errors
+		loginTextArea = new JTextArea(1, 20);
+		loginTextArea.setEditable(false);
+		loginTextArea.setBackground(new Color(238, 238, 238));
+
+		// Add the loginTextArea to the bottom of the main panel
+		panel.add(new JScrollPane(loginTextArea), BorderLayout.SOUTH);
+
+		// Add the main panel to the dialog
 		loginDialog.add(panel);
+
+		// Window listener for application close
+		loginDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+				System.exit(0);
+			}
+		});
 
 		// Show the login dialog
 		loginDialog.setVisible(true);
-	}// showLoginDialog
+	}
 
 	private class LoginButtonListener implements ActionListener {
 		@Override
@@ -148,33 +163,31 @@ public class ClientUI extends JFrame {
 
 			// validate credentials
 //					if (doSendLoginRequest(username, password)) {
-//						// Close the login dialog
+//						isLoggedIn = true;
 //						loginDialog.setVisible(false);
-			//
 //						// Proceed to the main application
 //						showMainApplication(user);
-
+			// testing
 			if (username.equals("admin") && password.equals("123")) {
 				// Admin login
 				isLoggedIn = true;
 				AdminUI adminUI = new AdminUI(mainFrame);
-				adminUI.appInitialize(mainFrame); // Initialize admin UI components
-				mainFrame.repaint();
 				loginDialog.setVisible(false);
-				updateMenuItems();
-//				mainFrame.setVisible(true); // Make main frame visible once the admin UI is set up
+
+				adminUI.appInitialize(mainFrame); // Initialize admin UI components
+				mainFrame.setVisible(true);
 			} else if (username.equals("user") && password.equals("123")) {
 				// Regular user login
 				isLoggedIn = true;
-				appInitialize(mainFrame); // Initialize client UI components
 				loginDialog.setVisible(false);
-				mainFrame.repaint();
-				updateMenuItems();
-//				mainFrame.setVisible(true); // Make main frame visible once the client UI is set up
+
+				appInitialize(mainFrame); // Initialize client UI components
+				mainFrame.setVisible(true);
 			} else {
-				JOptionPane.showMessageDialog(loginDialog, "Invalid credentials. Please try again.");
+				loginTextArea.setText("Invalid credentials. Please try again.");
+
 			}
-			
+
 		}
 
 	}// LoginButtonListener()
@@ -185,75 +198,66 @@ public class ClientUI extends JFrame {
 		if (true) {
 			// If user is an admin, create AdminUI
 			AdminUI adminUI = new AdminUI(mainFrame);
-			adminUI.appInitialize(mainFrame); // Initialize the admin UI components
+			adminUI.appInitialize(mainFrame);
+			mainFrame.setVisible(true);
 		} else {
 			// If user is a regular user, create ClientUI
-			appInitialize(mainFrame); // Initialize the client UI components
+			appInitialize(mainFrame);
+			mainFrame.setVisible(true);
 		}
 
 		// Make sure the main application frame is visible
 		mainFrame.setVisible(true);
 	}// showMainApplication()
-private void updateMenuItems() {
-    loginItem.setVisible(!isLoggedIn);   
-    logoutItem.setVisible(isLoggedIn);   
-}
+
 	public void appInitialize(JFrame mainFrame) {
-		// setup the menu bar
-		menuBar = new JMenuBar();
+		if (mainFrame == null) {
+			mainFrame = new JFrame();
+		}
 
-		// create a file menu
-		JMenu fileMenu = new JMenu("𓈒∘☁︎");
-//		JMenu toolMenu = new JMenu("Tools");
+		// Create the menu bar if it hasn't been created yet
+		if (menuBar.getMenuCount() == 0) {
+			JMenu fileMenu = new JMenu("𓈒∘☁︎");
 
-		// create menu items
-		loginItem = new JMenuItem("Login...");
-		loginItem.addActionListener(e -> {
-			showLoginDialog();
-		});
-		createChatroomItem = new JMenuItem("Create Chatroom");
-		createChatroomItem.addActionListener(e -> {
-//			doCreateChatroom();
-		});
+			JMenuItem createChatroomItem = new JMenuItem("Create Chatroom");
+			createChatroomItem.addActionListener(e -> {
+				// doCreateChatroom();
+			});
 
-		joinChatroomItem = new JMenuItem("Join Chatroom");
-		joinChatroomItem.addActionListener(e -> {
-//			doJoinChatroom();
-		});
-		
-		inviteUserToChatroomItem = new JMenuItem("Invite User to Chatroom");
-		inviteUserToChatroomItem.addActionListener(e -> {
-			//doInviteUserToChatroom();
-		});
-		leaveChatroomItem = new JMenuItem("Leave Chatroom");
-		leaveChatroomItem.addActionListener(e -> {
-//			doLeaveChatroom();
-		});
+			JMenuItem joinChatroomItem = new JMenuItem("Join Chatroom");
+			joinChatroomItem.addActionListener(e -> {
+				// doJoinChatroom();
+			});
 
-		logoutItem = new JMenuItem("Logout");
-		logoutItem.addActionListener(e -> {
-//			doSendLogoutRequest();
+			JMenuItem inviteUserToChatroomItem = new JMenuItem("Invite User to Chatroom");
+			inviteUserToChatroomItem.addActionListener(e -> {
+				// doInviteUserToChatroom();
+			});
 
-		});
+			JMenuItem leaveChatroomItem = new JMenuItem("Leave Chatroom");
+			leaveChatroomItem.addActionListener(e -> {
+				// doLeaveChatroom();
+			});
 
-		// add menu items to the file menu
-		
-		fileMenu.add(createChatroomItem);
-		fileMenu.add(joinChatroomItem);
-		fileMenu.add(inviteUserToChatroomItem);
-		fileMenu.add(leaveChatroomItem);
-		fileMenu.addSeparator(); // separator
-		fileMenu.add(loginItem);
-		fileMenu.add(logoutItem);
-//		toolMenu.add(ratingItem);
-//		toolMenu.add(runtimeItem);
+			JMenuItem logoutItem = new JMenuItem("Logout");
+			logoutItem.addActionListener(e -> {
+				// Perform logout actions here
+			});
 
-		// add file menu to the menu bar
-		menuBar.add(fileMenu);
-//		menuBar.add(toolMenu);
+			// Add the items to the file menu
+			fileMenu.add(createChatroomItem);
+			fileMenu.add(joinChatroomItem);
+			fileMenu.add(inviteUserToChatroomItem);
+			fileMenu.add(leaveChatroomItem);
+			fileMenu.addSeparator();
+			fileMenu.add(logoutItem);
 
-		// set the menu bar to the main frame
-		mainFrame.setJMenuBar(menuBar);
+			// Add the file menu to the menu bar
+			menuBar.add(fileMenu);
+
+			// Set the menu bar to the main frame
+			mainFrame.setJMenuBar(menuBar);
+		} // if
 
 		// Initialize the models
 		privateMessagesModel = new DefaultListModel<>();
@@ -353,6 +357,7 @@ private void updateMenuItems() {
 		mainFrame.add(splitPane, BorderLayout.CENTER);
 		mainFrame.setLocationRelativeTo(null); // Center the frame on screen
 		mainFrame.setVisible(true);
-	}// appInitialize
+
+	}// appInitialize()
 
 }
