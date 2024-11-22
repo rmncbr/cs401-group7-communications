@@ -16,6 +16,7 @@ public class ConsoleUI {
 	private ConcurrentHashMap<Integer, Chatroom> chatrooms = null;
 	private ConcurrentHashMap<Integer, String> userMap = null;
 	
+	private User user;
 	private Boolean operationCheck = false;
 	private ConsoleClient client;
 	
@@ -138,7 +139,7 @@ public class ConsoleUI {
 		MessageCreator messageCreator = new MessageCreator(MessageType.UTU);
 		messageCreator.setContents("TEST");
 		
-		client.UTU(messageCreator.createMessage());
+		client.sendMessageToUser("Hey", "Bana", 123);
 	}
 	
 	public void initUpdate(Message message) {

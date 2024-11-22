@@ -77,7 +77,7 @@ public class ClientUI extends JFrame {
 		try {
 			this.client.sendLoginRequest(userName, password);
 			return true;
-		} catch (IOException e) {
+		} catch (IllegalStateException | IOException e) {
 			return false;
 		}
 	}// doSendLoginRequest()
