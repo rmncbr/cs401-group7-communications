@@ -5,6 +5,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import server.User;
 import shared.*;
 
 public class Client {
@@ -16,6 +17,7 @@ public class Client {
 	private ObjectOutputStream toServer;
 	private ObjectInputStream fromServer;
 	private volatile Boolean connected = false;
+	private User user = null;
 
 	private ConcurrentLinkedQueue<Message> messageQueue = new ConcurrentLinkedQueue<Message>();
 	
@@ -46,9 +48,15 @@ public class Client {
 			
 		}
 		catch(IOException e) {
-			System.out.println("Failed to Connect to Server!");
-			connected = false;
-			throw e;
+			try {
+				reconnect();
+			}
+			catch(IOException e1) {
+				System.out.println("Failed to Connect to Server!");
+				connected = false;
+				throw e;
+			}
+
 		}
 		
 	}
@@ -64,60 +72,57 @@ public class Client {
 	public void sendLogoutRequest() throws IOException {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
 		
-		/*
 		if(user != null) {
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
 		}
-		*/
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
 	public void sendPasswordChangeRequest(String userName, String password) throws IOException{
-		/*
-		if(user != null) {
-			if(user.getAdminStatus || user.getUserName == userName) {
-				//messageCreator.setFromUserName(user.getUserName());
-				//messageCreator.setFromUserID(user.getUserID());
-			}
-			else return // Not an admin & not the user's account!
-		}
-		*/
-		
 		MessageCreator messageCreator = new MessageCreator(MessageType.CPWD);
+		
+		if(user != null) {
+			if(user.getAdminStatus() || user.getUsername() == userName) {
+				messageCreator.setFromUserName(user.getUsername());
+				messageCreator.setFromUserID(user.getID());
+			}
+			else return; // Not an admin & not the user's account!
+		}
+		
 		messageCreator.setContents(userName + "|" + password);
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
-	public void sendMessageToUser(String message, String toUserName, int toUserID) throws IOException {
+	public void sendMessageToUser(String message, String toUsername, int toUserID) throws IOException {
 		MessageCreator messageCreator = new MessageCreator(MessageType.UTU);
 		
 		messageCreator.setContents(message);
-		messageCreator.setToUserName(toUserName);
+		messageCreator.setToUserName(toUsername);
 		messageCreator.setToUserID(toUserID);
-		/*
+		
 		if(user != null) {
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
 		}
-		*/
+		
 		sendMessage(messageCreator.createMessage());
 	}
 	
-	public void sendMessageToChatroom(String message, int chatroomID) throws IOException{
+	public void sendMessageToChatroom(String message, int chatroomID) throws IOException, IllegalStateException{
 		MessageCreator messageCreator = new MessageCreator(MessageType.UTC);
 		
 		messageCreator.setContents(message);
 		messageCreator.setToChatroom(chatroomID);
 		
-		/*
+		
 		if(user != null) {
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
 		}
-		*/
+		
 		sendMessage(messageCreator.createMessage());
 	}
 	
@@ -125,70 +130,125 @@ public class Client {
 		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
 		messageCreator.setToChatroom(chatroomID);
 		
-		/*
+		
 		if(user != null) {
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
 		}
-		*/
+		
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
 	public void getMessageLogs(String userName) throws IOException {
-		/*
-		if(user != null) {
-			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
-		}
-		*/
 		MessageCreator messageCreator = new MessageCreator(MessageType.GUL);
+		
+		if(user != null) {
+			if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
 		messageCreator.setToUserName(userName);
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
 	public void getChatLogs(int chatroomID) throws IOException {
-		/*
-		if(user != null) {
-			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
-		}
-		*/
 		MessageCreator messageCreator = new MessageCreator(MessageType.GCL);
+		
+		if(user != null) {
+			if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
 		messageCreator.setToChatroom(chatroomID);
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
 	public void addUser(String userName, String password) throws IOException {
-		/*
-		if(user != null) {
-			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
-		}
-		*/
 		MessageCreator messageCreator = new MessageCreator(MessageType.ADDUSER);
+		
+		if(user != null) {
+			if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+
 		messageCreator.setToUserName(userName);
 		
 		sendMessage(messageCreator.createMessage());
 	}
 	
 	public void deleteUser(String userName, String password) throws IOException {
-		/*
-		if(user != null) {
-			// if(!user.getAdminStatus()) return; // Not an admin so don't send message!
-			//messageCreator.setFromUserName(user.getUserName());
-			//messageCreator.setFromUserID(user.getUserID());
-		}
-		*/
 		MessageCreator messageCreator = new MessageCreator(MessageType.DELUSER);
+		
+		if(user != null) {
+			if(!user.getAdminStatus()) return; // Not an admin so don't send message!
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+
 		messageCreator.setToUserName(userName);
 		
 		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void createChatroom() throws IOException{
+		MessageCreator messageCreator = new MessageCreator(MessageType.CC);
+		
+		if(user != null) {
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void inviteUserToChatroom(String toUsername, int toUserID) throws IOException{
+		MessageCreator messageCreator = new MessageCreator(MessageType.IUC);
+		
+		messageCreator.setToUserName(toUsername);
+		messageCreator.setToUserID(toUserID);
+		
+		if(user != null) {
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
+		
+		sendMessage(messageCreator.createMessage());
+	}
+	
+	public void joinChatroom(int chatroomID) throws IOException {
+		MessageCreator messageCreator = new MessageCreator(MessageType.JC);
+		
+		messageCreator.setToChatroom(chatroomID);
+		
+		if(user != null) {
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
+		sendMessage(messageCreator.createMessage());
+		
+	}
+	
+	public void leaveChatroom(int chatroomID) throws IOException {
+		MessageCreator messageCreator = new MessageCreator(MessageType.LC);
+		
+		messageCreator.setToChatroom(chatroomID);
+		
+		if(user != null) {
+			messageCreator.setFromUserName(user.getUsername());
+			messageCreator.setFromUserID(user.getID());
+		}
+		
+		sendMessage(messageCreator.createMessage());
+		
+		user.getChatrooms().remove(chatroomID);
 	}
 	
 	private void sendMessage(Message message) throws IOException {
@@ -259,16 +319,11 @@ public class Client {
 				
 				switch(type) {
 					case LOGIN:
-						// Login fail so try reconnect to server
+						// Login fail
 						if(!message.getContents().equals("SUCCESS")) {
-							try {
-								reconnect();
-							} catch (IOException e) {
-								System.err.println("Error reconnecting to Server");
-								closeResources();
-								e.printStackTrace();
-							}
+							throw new IllegalStateException("Bad Login Credentials");
 						}
+						// user = message.getUser();
 						clientGui.initUpdate(message);
 						break;
 					case LOGOUT:
