@@ -4,12 +4,12 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
-//
+
 import server.User;
 import shared.*;
 
 public class Client {
-	// //
+	
 	private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
 	private Socket serverSocket;
 	private String serverIP;
