@@ -9,7 +9,7 @@ import server.User;
 import shared.*;
 
 public class Client {
-	
+	//
 	private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
 	private Socket serverSocket;
 	private String serverIP;
