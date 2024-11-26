@@ -63,7 +63,7 @@ public class Client {
 	
 	public void sendLoginRequest(String userName, String password) throws IOException {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGIN);
-		messageCreator.setContents(userName + "|" + password);
+		messageCreator.setContents(userName + " " + password);
 		
 		sendMessage(messageCreator.createMessage());
 		
@@ -320,14 +320,14 @@ public class Client {
 				switch(type) {
 					case LOGIN:
 						// Login fail
-						if(!message.getContents().equals("SUCCESS")) {
+						if(!message.getContents().equals("Success")) {
 							throw new IllegalStateException("Bad Login Credentials");
 						}
 						// user = message.getUser();
 						clientGui.initUpdate(message);
 						break;
 					case LOGOUT:
-						if(message.getContents().equals("SUCCESS")) {
+						if(message.getContents().equals("Error")) {
 							connected = false;
 						}
 						clientGui.update(message);
