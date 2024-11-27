@@ -1,5 +1,8 @@
 package shared;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+
+import server.*;
 
 public class MessageCreator {
 	private String contents;
@@ -7,16 +10,25 @@ public class MessageCreator {
 	private int toUserID;
 	private String fromUserName;
 	private int fromUserID;
-	private int toChatroom;
+	private int toChatroomID;
 	private MessageType messageType;
-	// private User user;
-	//Map<Integer, User> chatroomMapping;
-	Map<Integer, String> userMap;
+	private User user;
+	private Chatroom chatroom;
+	private ConcurrentMap<Integer, Chatroom> chatroomMapping;
+	private ConcurrentMap<Integer, String> userMap;
 	
 	public MessageCreator(MessageType messageType) {
 		this.messageType = messageType;
-		//this.chatroomMapping = new HashMap<Integer, User>();
-		this.userMap = new HashMap<Integer, String>();
+		this.contents = null;
+		this.toUserName = null;
+		this.toUserID = -1;
+		this.fromUserName = null;
+		this.fromUserID = -1;
+		this.toChatroomID = -1;
+		this.user = null;
+		this.chatroom = null;
+		this.chatroomMapping = null;
+		this.userMap = null;
 	}
 	
 	public void setContents(String contents) {
@@ -39,19 +51,23 @@ public class MessageCreator {
 		this.fromUserID = fromUserID;
 	}
 	
-	public void setToChatroom(int toChatroom) {
-		this.toChatroom = toChatroom;
+	public void setToChatroom(int toChatroomid) {
+		this.toChatroomID = toChatroomid;
 	}
 	
-	public void setUser(/*User user*/) {
-        //this.user = user;
+	public void setUser(User user) {
+        this.user = user;
     }
 	
-	public void setUserMap(/* Map<Integer, User> chatroomMapping */) {
-		// this.chatroomMapping = chatroomMapping;
+	public void setChatroom(Chatroom chatroom) {
+        this.chatroom = chatroom;
+    }
+	
+	public void setChatroomMap( ConcurrentMap<Integer, Chatroom> chatroomMapping ) {
+		this.chatroomMapping = chatroomMapping;
 	}
 	
-	public void setUserMap(Map<Integer, String> userMap) {
+	public void setUserMap(ConcurrentMap<Integer, String> userMap) {
 		this.userMap = userMap;
 	}
 	
@@ -78,14 +94,24 @@ public class MessageCreator {
 	public MessageType getMessageType() {
 		return this.messageType;
 	}
-	public Integer getChatroom() {
-		return this.toChatroom;
+	
+	public int getChatroomID() {
+		return this.toChatroomID;
 	}
 	
+	public User getUser() {
+        return this.user;
+    }
 	
-	// Get user function
+	public Chatroom getChatroom() {
+		return this.chatroom;
+	}
 	
-	public Map<Integer, String> getUserMap() {
+	public ConcurrentMap<Integer, Chatroom> getChatroomMap() {
+		return this.chatroomMapping;
+	}
+	
+	public ConcurrentMap<Integer, String> getUserMap() {
 		return this.userMap;
 	}
 	
