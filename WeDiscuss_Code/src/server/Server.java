@@ -11,8 +11,8 @@ public class Server {
 	private UserManager userManager;
 	private LogManager logManager;
 	private ChatroomManager chatroomManager;
-	private ConcurrentHashMap<Integer, Socket> listOfClients;
-	
+	private ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients;
+	private ConcurrentHashMap<Integer, Thread> clientThreads; // NEW!
 	private ServerSocket serverSocket;
 	private int port;
 	private String serverIP;
@@ -28,7 +28,7 @@ public class Server {
 		this.logManager = new LogManager();
 		this.chatroomManager = new ChatroomManager();
 		this.listOfClients = new ConcurrentHashMap<>();
-	
+		this.clientThreads = new ConcurrentHashMap<>();
 		this.executorService = Executors.newFixedThreadPool(MAX_THREADS);
 	}
 	
@@ -66,11 +66,11 @@ public class Server {
 		return chatroomManager;
 	}
 	
-	public ConcurrentHashMap<Integer, Socket> getListOfClients() {
+	public ConcurrentHashMap<Integer, ObjectOutputStream> getListOfClients() {
 		return listOfClients;
 	}
 	
-	public Socket getSocketForUser(Integer userID) {
+	public ObjectOutputStream getSocketForUser(Integer userID) {
 		return listOfClients.get(userID);
 	}
 	
@@ -100,12 +100,20 @@ public class Server {
 	public void processResponse(Socket clientSocket) {
 		//Create appropriate Message objects and route them 
 		//to the correct handler based on message type
+		int userID = -1;
+		ObjectInputStream input = null;
+		ObjectOutputStream output = null;
 		try {
 			
-			ObjectInputStream input = new ObjectInputStream(clientSocket.getInputStream());
-			ObjectOutputStream output = new ObjectOutputStream(clientSocket.getOutputStream());
+			input = new ObjectInputStream(clientSocket.getInputStream());
+			output = new ObjectOutputStream(clientSocket.getOutputStream());
 			
 			while(running) {
+				// If thread stopped for w/e reason (User deletion) stop processing & shutdown
+			    if (Thread.interrupted()) {
+			        System.out.println("Thread interrupted, shutting down for user: " + userID);
+			        closeResources(clientSocket, input, output);
+			    }
 				
 				Message message = (Message) input.readObject();
 				
@@ -119,43 +127,66 @@ public class Server {
 				// Or maybe this thread itself just does the work?
 				switch(type) {
 					case LOGIN:
-						
+							userID = userManager.authUser(output, message);
+							if(userID != -1) {
+								 listOfClients.put(userID, output);
+								 clientThreads.put(userID, Thread.currentThread());
+							}
 						break;
 					case LOGOUT:
-		
+							if(userManager.logout(output, message)) {
+								closeResources(clientSocket, input, output);
+								clientThreads.remove(userID);
+								return;
+							}
 						break;
 					case ADDUSER:
-		
+							userManager.addUser(output, message);
 						break;
 					case DELUSER:
-		
+							int delUser = userManager.deleteUser(output, message);
+							// Then we need to remove the user from any chatrooms that they were involved in
+							// So maybe we add a method in chatroomManager that does that?
+							// Then if we do that, we have to notify EVERY client that is part of each chatroom the user is gone
+							// chatroomManager.removeUserfromChatroom(delUser, listOfClients);
+							if(delUser != -1) {
+								Thread clientThread = clientThreads.get(delUser);
+								if(clientThread != null) {
+									clientThread.interrupt();
+								}
+							}
 						break;
 					case CPWD:
-		
+							userManager.changeUserPassword(output, message);
 						break;
 					case GUL:
-						
+							logManager.getUserMessages(output, message);
 						break;
 					case GCL:
-						
+							logManager.getChatroomMessages(output, message);
 						break;
 					case CC:
-						
+							chatroomManager.createChatroom(output, message);
 						break;
 					case IUC:
-						
+							chatroomManager.addUsertoChatroom(output, message);
+							// add user to chatroom w/ chatroomManager & send chatroom to User
+							// Also need to add the ChatroomID to the list of involved chatrooms in the UserObject
 						break;
 					case JC:
-						
+							chatroomManager.addUsertoChatroom(output, message);
+							// Same thing as IUC
 						break;
 					case LC:
-						
+							// This should only be called when the Client itself wants to be removed
+							chatroomManager.removeUserfromChatroom(output, message);
 						break;
 					case UTU:
-						
+							// Find userID w/ userManager method
+							userManager.sendMessage(output, message, toUser);
 						break;
 					case UTC:
-						
+							chatroomManager.sendMessageToChatroom(output, message, listOfClients);
 						break;
 					default:
 						break;
@@ -168,9 +199,27 @@ public class Server {
 		catch(IOException | ClassNotFoundException e) {
 			System.err.println("Error processing Client Message: " + e.getMessage());
 		}
+		finally {
+			if(userID != -1) {
+				listOfClients.remove(userID);
+				clientThreads.remove(userID);
+			}
+			closeResources(clientSocket, input, output);
+		}
 		
 	}
 	
+	public void closeResources(Socket clientSocket, ObjectInputStream input, ObjectOutputStream output) {
+		try {
+			if(clientSocket != null) clientSocket.close();
+			if(input != null) input.close();
+			if(output != null) output.close();
+		}
+		catch(IOException e) {
+			System.err.println("Error closing resources!");
+			e.printStackTrace();
+		}
+	}
 	
 	public static void main(String[] args) throws UnknownHostException {
 		Server server = new Server(8080); //temp port for testing
