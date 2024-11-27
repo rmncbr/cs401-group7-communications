@@ -6,47 +6,37 @@ import java.util.concurrent.ConcurrentHashMap;
 import server.User;
 import shared.*;
 
-import java.io.File;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-//import java.util.HashMap;
-//import java.util.Map;
-import java.nio.file.Files;
 import java.io.IOException;
 
 public class ClientUI extends JFrame {
 	private User user;
+	private Client client;
 	private boolean isLoggedIn = false;
 	private ArrayList<Message> userMessages = new ArrayList<Message>();
-
 	JFrame mainFrame = new JFrame("WeDiscuss");
-
 	// menu bar items
 	JMenuBar menuBar = new JMenuBar();
-
 	// login fields
 	private JDialog loginDialog;
 	private JTextField usernameField;
 	private JPasswordField passwordField;
 	JTextArea loginTextArea = new JTextArea();
-
 	// swing components to display message and chatroom lists
 	private DefaultListModel<Message> privateMessagesModel;
 	private DefaultListModel<Message> chatroomMessagesModel;
 	private JList<Message> privateMessagesList;
 	private JList<Message> chatroomMessagesList;
-
-	// User and chatroom maps caches
+	// User and chatroom maps caches - populated on initUpdate() call
+	// chatroom id and user id
 	private ConcurrentHashMap<Integer, Chatroom> chatrooms = new ConcurrentHashMap<Integer, Chatroom>();
 	private ConcurrentHashMap<Integer, String> userMap = new ConcurrentHashMap<Integer, String>();
-
 	// messaging display area
 	private JPanel infoPanel;
 	private JTextArea msgInfoArea;
-
-	private Client client;
 
 	public ClientUI() {
 		client = new Client(this); // Init Client w/ this GUI
@@ -64,20 +54,113 @@ public class ClientUI extends JFrame {
 	}// main()
 
 	public void initUpdate(Message message) {
-		// MessageType.LOGIN
-	}// initUpdate()
+		// On MessageType.LOGIN, load the models from the User's cache maps
+		MessageType type = message.getMessageType();
+		if (type.equals(MessageType.LOGIN)) {
+			if (!message.getContents().equals("SUCCESS")) {
+				doSendLoginRequest(user.getUsername(), user.getPassword());
+			}
+			// populate chatrooms and userMap
+			// Load user model from userMap (for private messages)
+			privateMessagesModel.clear(); // Clear any existing messages
+			// Loop through the userMap to create messages for each user
+			userMap.forEach((key, value) -> {
+
+				Message privateMessage = new Message(new MessageCreator(MessageType.ADDUSER));
+
+				// Add the message to the model, will call Message toString() by default to
+				// display contents
+				privateMessagesModel.addElement(privateMessage);
+
+				// Debugging output
+				System.out.println("User ID: " + key + ", Username: " + value);
+			});
+
+			// Similarly, load the chatroom messages model
+			chatroomMessagesModel.clear(); // Clear any existing messages
+			// Loop through the chatrooms map to create chatroom messages
+			chatrooms.forEach((key, value) -> {
+				// Create a message related to the chatroom
+				Message chatroomMessage = new Message(new MessageCreator(MessageType.ADDUSER));
+
+				// Add the chatroom message to the model
+				chatroomMessagesModel.addElement(chatroomMessage);
+
+				// Debugging output
+				System.out.println("Chatroom ID: " + key + ", Chatroom: " + value);
+			});
+		}
+	}
 
 	public void update(Message message) {
+		// For updating the models throughout the User's session
 		privateMessagesModel.clear();
 		chatroomMessagesModel.clear();
+
+		MessageType type = message.getMessageType();
+		switch (type) {
+//		clientGui.update(message);
+		case LOGOUT:
+			// close application
+			break;
+		case ADDUSER:
+			// confirm message
+
+			break;
+		case DELUSER:
+			// confirm message
+
+			break;
+		case CPWD:
+			// confirm message
+
+			break;
+		case GUL:
+			// message w/ log contents
+
+			break;
+		case GCL:
+			// message w/ log contents
+
+			break;
+		case CC:
+			// messge w/ chatroom id
+
+			break;
+		case IUC:
+			// message w/ chatroom
+
+			break;
+		case JC:
+			// message w/ chatroom
+
+			break;
+		case LC:
+			// confirm message
+
+			break;
+		case UTU:
+			// message w/ message contents & info
+
+			break;
+		case UTC:
+			// message w/ message contents add to chatroom
+
+			break;
+		default:
+			break;
+		}
+
 	}// update()
 
-	// do functions
+	/* user functions */
 	private boolean doSendLoginRequest(String userName, String password) {
+
 		try {
 			this.client.sendLoginRequest(userName, password);
 			return true;
-		} catch (IllegalStateException | IOException e) {
+		} catch (IOException e) {
+			System.out.println(e);
 			return false;
 		}
 	}// doSendLoginRequest()
@@ -87,20 +170,174 @@ public class ClientUI extends JFrame {
 			this.client.sendLogoutRequest();
 			return true;
 		} catch (IOException e) {
+			System.out.println(e);
 			return false;
 		}
 	}// doSendLogoutRequest()
 
-	private void doUTU() {
+	private boolean doSendPasswordChangeRequest(String userName, String password) {
+		try {
+			this.client.sendPasswordChangeRequest(userName, password);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doSendPasswordChangeRequest()
 
-	}// doUTU()
+	/* chatroom functions */
 
-	private void doSendMessage(MessageCreator mc, Message message) {
-	}// doSendMessage()
+	private void doCreateChatroom() {
+		try {
+			this.client.createChatroom();
+//			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+//			return false;
+		}
+	}// doCreateChatroom()
 
-	private void doReconnect() {
+	private void doInviteUserToChatroom(String toUsername, int toUserID) {
+		// requires String toUsername, int toUserID
+		try {
+			this.client.inviteUserToChatroom(toUsername, toUserID);
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+	}// doInviteUserToChatroom()
 
-	}// doReconnect()
+	private void doJoinChatroom(int chatroomID) {
+		try {
+			this.client.joinChatroom(chatroomID);
+			;
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+	}// doJoinChatroom()
+
+	private void doLeaveChatroom(int chatroomID) {
+		try {
+			this.client.leaveChatroom(chatroomID);
+		} catch (IOException e) {
+			System.out.println(e);
+		}
+	}// doLeaveChatroom()
+
+	/* messaging functions */
+	private boolean doSendMessageToUser(String message, String toUsername, int toUserID) {
+		try {
+			this.client.sendMessageToUser(message, toUsername, toUserID);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doSendMessageToUser()
+
+	private boolean doSendMessageToChatroom(String message, int chatroomID) {
+		try {
+			this.client.sendMessageToChatroom(message, chatroomID);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doSendMessageToChatroom()
+
+	private boolean doGetChatroom(int chatroomID) {
+		try {
+			this.client.getChatroom(chatroomID);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doGetChatroom()
+
+	/* admin functions */
+	private boolean doGetMessageLogs(String username) {
+		try {
+			this.client.getMessageLogs(username);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doGetMessageLogs()
+
+	private boolean doGetChatLogs(int chatroomID) {
+		try {
+			this.client.getChatLogs(chatroomID);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doGetChatLogs()
+
+	private boolean doAddUser(String userName, String password) {
+		try {
+			this.client.addUser(userName, password);
+			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+			return false;
+		}
+	}// doAddUser()
+
+	private void doDeleteUser(String userName, String password) {
+		try {
+			this.client.deleteUser(userName, password);
+//			return true;
+		} catch (IOException e) {
+			System.out.println(e);
+//			return false;
+		}
+	}// doDeleteUser()
+
+	/* UI things */
+
+	private void changePasswordDialog() {
+		JDialog cpwdDialog = new JDialog(mainFrame, "Change Password", true); // Modal dialog
+		cpwdDialog.setSize(300, 150);
+		cpwdDialog.setLocationRelativeTo(mainFrame);
+
+		// Create the main panel with BorderLayout
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+
+		// Create the input fields
+		JPanel inputPanel = new JPanel();
+		inputPanel.setLayout(new FlowLayout());
+//		JLabel oldPwLabel = new JLabel("Old Password:");
+//		JPasswordField oldPwField = new JPasswordField(15);
+		JLabel newPwLabel = new JLabel("New Password:");
+		JPasswordField newPwField = new JPasswordField(15);
+
+		JButton cpwdButton = new JButton("Submit");
+
+		// Add components to the input panel
+//		inputPanel.add(oldPwLabel);
+//		inputPanel.add(oldPwField);
+
+		inputPanel.add(newPwLabel);
+		inputPanel.add(newPwField);
+		inputPanel.add(new JLabel()); // Empty label to align the button
+		inputPanel.add(cpwdButton);
+
+		// Add the inputPanel to the center of the main panel
+		panel.add(inputPanel, BorderLayout.CENTER);
+		cpwdDialog.add(panel);
+		cpwdDialog.setVisible(true);
+
+		cpwdButton.addActionListener(e -> {
+//			String oldPw = new String(oldPwField.getPassword());
+			String newPw = new String(newPwField.getPassword());
+			doSendPasswordChangeRequest(this.user.getUsername(), newPw);
+			cpwdDialog.setVisible(false);
+		});
+
+	}// changePasswordDialog()
 
 	private void showLoginDialog() {
 		loginDialog = new JDialog(mainFrame, "WeDiscuss Login", true); // Modal dialog
@@ -119,7 +356,6 @@ public class ClientUI extends JFrame {
 		JLabel passwordLabel = new JLabel("Password:");
 		passwordField = new JPasswordField(15);
 		JButton loginButton = new JButton("Login");
-		loginButton.addActionListener(new LoginButtonListener());
 
 		// Add components to the input panel
 		inputPanel.add(usernameLabel);
@@ -153,49 +389,48 @@ public class ClientUI extends JFrame {
 
 		// Show the login dialog
 		loginDialog.setVisible(true);
-	}
 
-	private class LoginButtonListener implements ActionListener {
-		@Override
-		public void actionPerformed(ActionEvent e) {
+		loginButton.addActionListener(e -> {
 			String username = usernameField.getText();
 			String password = new String(passwordField.getPassword());
 
 			// validate credentials
-//					if (doSendLoginRequest(username, password)) {
-//						isLoggedIn = true;
-//						loginDialog.setVisible(false);
-//						// Proceed to the main application
-//						showMainApplication(user);
-			// testing
-			if (username.equals("admin") && password.equals("123")) {
-				// Admin login
-				isLoggedIn = true;
-				AdminUI adminUI = new AdminUI(mainFrame);
-				loginDialog.setVisible(false);
-
-				adminUI.appInitialize(mainFrame); // Initialize admin UI components
-				mainFrame.setVisible(true);
-			} else if (username.equals("user") && password.equals("123")) {
-				// Regular user login
+			if (doSendLoginRequest(username, password)) {
 				isLoggedIn = true;
 				loginDialog.setVisible(false);
+				// Proceed to the main application
+				showMainApplication(user);
 
-				appInitialize(mainFrame); // Initialize client UI components
-				mainFrame.setVisible(true);
 			} else {
 				loginTextArea.setText("Invalid credentials. Please try again.");
-
 			}
+		});
+	}// showLoginDialog()
 
-		}
-
-	}// LoginButtonListener()
+//			if (username.equals("admin") && password.equals("123")) {
+//				// Admin login
+//				isLoggedIn = true;
+//				AdminUI adminUI = new AdminUI(mainFrame);
+//				loginDialog.setVisible(false);
+//
+//				adminUI.appInitialize(mainFrame); // Initialize admin UI components
+//				mainFrame.setVisible(true);
+//			} else if (username.equals("user") && password.equals("123")) {
+//				// Regular user login
+//				isLoggedIn = true;
+//				loginDialog.setVisible(false);
+//
+//				appInitialize(mainFrame); // Initialize client UI components
+//				mainFrame.setVisible(true);
+//			} else {
+//				loginTextArea.setText("Invalid credentials. Please try again.");
+//
+//			}
+//
 
 	private void showMainApplication(User user) {
 		// Initialize main UI components
-//	    if (user.adminStatus == true) {
-		if (true) {
+		if (user.getAdminStatus()) {
 			// If user is an admin, create AdminUI
 			AdminUI adminUI = new AdminUI(mainFrame);
 			adminUI.appInitialize(mainFrame);
@@ -205,8 +440,6 @@ public class ClientUI extends JFrame {
 			appInitialize(mainFrame);
 			mainFrame.setVisible(true);
 		}
-
-		// Make sure the main application frame is visible
 		mainFrame.setVisible(true);
 	}// showMainApplication()
 
@@ -221,27 +454,37 @@ public class ClientUI extends JFrame {
 
 			JMenuItem createChatroomItem = new JMenuItem("Create Chatroom");
 			createChatroomItem.addActionListener(e -> {
-				// doCreateChatroom();
+				doCreateChatroom();
 			});
 
 			JMenuItem joinChatroomItem = new JMenuItem("Join Chatroom");
 			joinChatroomItem.addActionListener(e -> {
-				// doJoinChatroom();
+//				 doJoinChatroom();
 			});
 
 			JMenuItem inviteUserToChatroomItem = new JMenuItem("Invite User to Chatroom");
 			inviteUserToChatroomItem.addActionListener(e -> {
-				// doInviteUserToChatroom();
+//				 doInviteUserToChatroom();
 			});
 
 			JMenuItem leaveChatroomItem = new JMenuItem("Leave Chatroom");
 			leaveChatroomItem.addActionListener(e -> {
-				// doLeaveChatroom();
+//				 doLeaveChatroom();
+			});
+
+			JMenuItem changePasswordItem = new JMenuItem("Change Password");
+			changePasswordItem.addActionListener(e -> {
+				changePasswordDialog();
 			});
 
 			JMenuItem logoutItem = new JMenuItem("Logout");
 			logoutItem.addActionListener(e -> {
-				// Perform logout actions here
+
+				if (doSendLogoutRequest()) {
+					// close connection and application
+				} else {
+					// throw error message
+				}
 			});
 
 			// Add the items to the file menu
@@ -250,6 +493,7 @@ public class ClientUI extends JFrame {
 			fileMenu.add(inviteUserToChatroomItem);
 			fileMenu.add(leaveChatroomItem);
 			fileMenu.addSeparator();
+			fileMenu.add(changePasswordItem);
 			fileMenu.add(logoutItem);
 
 			// Add the file menu to the menu bar
