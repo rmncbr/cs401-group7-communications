@@ -27,28 +27,48 @@ public class LogManager {
 		logFile = "";
 	}
 
-	public void handleClient(Socket socket, Message message) {
-		try (socket) {
-			OutputStream outputStream = socket.getOutputStream();
-			ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-			objectOutputStream.writeObject(answerLogRequest(message)); // The response here could be in JSON format
-			objectOutputStream.flush();
-		} catch (Exception e) {
-			System.out.println("Error:" + socket);
-		}
-	}// handleClient
+//	// running thread to listen and record logs 
+//	public void handleClient(Socket socket, Message message) {
+//		try (socket) {
+//			OutputStream outputStream = socket.getOutputStream();
+//			ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+//			objectOutputStream.writeObject(answerLogRequest(message)); 
+//			objectOutputStream.flush();
+//			
+//		} catch (Exception e) {
+//			System.out.println("Error:" + socket);
+//		}
+//	}// handleClient
 
-	public List<Message> getUserMessages(int userID) {
-		return userMessageLogs.getOrDefault(userID, new ArrayList<>());
+	public void getUserMessages(ObjectOutputStream output, Message message) {
+        int userID = message.getFromUserID(); 
+        List<Message> messages = userMessageLogs.getOrDefault(userID, new ArrayList<>());
+        
+        try {
+            output.writeObject(messages);  
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}// getUserMessages
 
-	public List<Message> getChatroomMessages(int chatroomID) {
-		return chatroomMessageLogs.getOrDefault(chatroomID, new ArrayList<>());
+	public void getChatroomMessages(ObjectOutputStream output, Message message) {
+        int chatroomID = message.getToChatroom();  // Assuming the chatroom ID is in the message
+        List<Message> messages = chatroomMessageLogs.getOrDefault(chatroomID, new ArrayList<>());
+        
+        try {
+            output.writeObject(messages); 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 	}// getChatroomMessages
 
-	public List<Message> answerLogRequest(Message message) {
-		return (message.getMessageType() == MessageType.GUL ? getUserMessages(message.getFromUserID())
-				: getChatroomMessages(message.getToChatroom()));
+	public void answerLogRequest(Message message) {
+        MessageType type = message.getMessageType();
+        if (type == MessageType.GUL) {  // Get User Logs
+            getUserMessages(null, message);
+        } else if (type == MessageType.GCL) {  // Get Chatroom Logs
+            getChatroomMessages(null, message);
+        }
 	}// answerLogRequest
 
 	public void storeMessage(Message message) {
