@@ -18,9 +18,11 @@ public class UserManager {
 	private ConcurrentHashMap<String, String> adminStatus = new ConcurrentHashMap<String, String>(); // map of admin status
 	private ConcurrentHashMap<Integer, String> userIDToUsername = new ConcurrentHashMap<Integer, String>(); // id to username
 	private ConcurrentHashMap<String, Integer> usernameToUserID = new ConcurrentHashMap<String, Integer>(); // username to id
-	private ArrayList<String> activeUsers = new ArrayList<String>(); //
-	private ArrayList<String> allUsernames = new ArrayList<String>(); // list of all usernames
-	private ConcurrentHashMap<String, User> allUsers = new ConcurrentHashMap<String, User>(); // map of all existing users
+	private ConcurrentHashMap<String, User> allUsers = new ConcurrentHashMap<String, User>(); // map of all existing users to usernames
+	
+	private List<String> activeUsers = Collections.synchronizedList(new ArrayList<String>()); // list of active users
+	private List<String> allUsernames = Collections.synchronizedList(new ArrayList<String>()); // list of all usernames
+	
 	
 	//filename
 	private String userFile = "UserFile.txt";
@@ -67,8 +69,8 @@ public class UserManager {
 				usernameToUserID.put(token.get(0), id);
 				
 				//create user and add it to list of all users
-				//User makeuser = new User(token.get(0), token.get(1), token.get(2), id);
-				//allUsers.put(token.get(0), makeuser);
+				User makeuser = new User(token.get(0), token.get(1), token.get(2), id);
+				allUsers.put(token.get(0), makeuser);
 				
 				
 				line.close();
@@ -80,10 +82,6 @@ public class UserManager {
         }
 	}
 	
-	public void handleClient(Socket socket, Message message, Server server)
-	{
-		//idk yet
-	}
 	
 	public String getUsername(int id)
 	{
@@ -94,23 +92,23 @@ public class UserManager {
 		
 	}
 	
-	public Integer getUserID(String username)
+	public int getUserID(String username)
 	{
 		Integer find;
 		find = usernameToUserID.get(username);
 		//if username is not found, 'find' will be labeled as null
+		if (find == null)
+		{
+			return -1;
+		}
 		return find;
 		
 	}
 	
-	public void authUser(Socket socket, Message message)
+	public int authUser(ObjectOutputStream out, Message message)
 	{
 		
 		try {
-			//establish a one way connection
-			OutputStream outputStream = socket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
-			
 			//message variable
 			Message Send;
 			MessageCreator create;
@@ -118,16 +116,13 @@ public class UserManager {
 			create.setContents("Error"); 
 			Send = new Message(create);// have message ready to return a deny
 			
-			boolean ConfirmName = false;
-			boolean ConfirmPW = false;
-			
 			String input = message.getContents();
 			
 			//check for bad input
 			if (input == null)
 			{
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 			}
 			
 		    //split the given string by using space as delimiter
@@ -136,43 +131,43 @@ public class UserManager {
 		    if (split.length != 2)
 		    {
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 		    }
 		    
 		    // check if username exits and is not signed in already
 		    if (validUsers.containsKey(split[0]) && activeUsers.contains(split[0]))//short circuits 
 		    {
-		    	if(validUsers.get(split[0]) != null)//check if Password exits
+		    	String grab = validUsers.get(split[0]);
+		    	if(grab != null && grab.equals(split[1]))//check if Password exitsts and is valid
 		    	{
 					create.setContents("Success");
-					//create.setUser(allUsers.get(split[0])); // send back User object
+					create.setUser(allUsers.get(split[0])); // send back User object
 					Send = new Message(create);// create an accept message
 					out.writeObject(Send); //send the message
 					activeUsers.add(split[0]); // add to list of active users
-					return;
+					return getUserID(split[0]);
 		    	} 
 				out.writeObject(Send); //send deny if credentials dont work
-				return;
+				return -1;
 		    	
 		    }
 		    out.writeObject(Send); //send deny if credentials dont work
+		    return -1;
 		    
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
+		return -1;
 	}
 	
 	
 	
-	public void addUser(Socket socket, Message message)
+	public void addUser(ObjectOutputStream out, Message message)
 	{
 		try {
-			//establish a one way connection
-			OutputStream outputStream = socket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
-			
+
 			//message variable
 			Message Send;
 			MessageCreator create;
@@ -222,12 +217,9 @@ public class UserManager {
 		}
 	}
 	
-	public void changeUserPassword(Socket socket, Message message)
+	public void changeUserPassword(ObjectOutputStream out, Message message)
 	{
 		try {
-			//establish a one way connection
-			OutputStream outputStream = socket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
 			
 			//message variable
 			Message Send;
@@ -248,7 +240,7 @@ public class UserManager {
 			
 		    //split the given string by using space as delimiter
 		    String[] split = input.split("\\s+");
-		    //check for bad input (username,password)
+		    //check for bad input (username password)
 		    if (split.length != 2)
 		    {
 				out.writeObject(Send); //send the deny message
@@ -260,6 +252,9 @@ public class UserManager {
 		    if (validUsers.containsKey(split[0]))
 		    {
 		    	validUsers.put(split[0], split[1]);
+		    	User toChange = allUsers.get(split[0]);
+		    	toChange.setPassword(split[1]);
+		    	
 		    	create.setContents("Success");
 				Send = new Message(create);// create an accept message
 		    	out.writeObject(Send);//send success message
@@ -276,12 +271,9 @@ public class UserManager {
 		}
 	}
 	
-	public void sendMessage(Socket fromSocket, Message message, Socket toSocket)
+	public void sendMessage(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients)
 	{
 		try {
-			//establish a one way connection
-			OutputStream outputStream = fromSocket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
 			
 			//message variable
 			Message Send;
@@ -306,24 +298,27 @@ public class UserManager {
 			{
 				if(activeUsers.contains(message.getToUserName())) // only send out message if user is online
 				{
-					OutputStream outputStream2 = toSocket.getOutputStream();
-					ObjectOutputStream outReceiver = new ObjectOutputStream(outputStream2);
-					MessageCreator toUser = new MessageCreator(MessageType.UTU);
-					toUser.setContents(input);
-					toUser.setFromUserID(message.getFromUserID());
-					toUser.setFromUserName(message.getFromUserName());
-					toUser.setToUserID(message.getToUserID());
-					toUser.setToUserName(message.getToUserName());
-					Send = new Message(toUser);
-					outReceiver.writeObject(Send);
+					//get output stream for receiver
+					int receiver = message.getToUserID();
+					ObjectOutputStream outReceiver = listOfClients.get(receiver);
+					
+					//just make sure the output stream exists
+					if(outReceiver != null)
+					{
+						outReceiver.writeObject(message);
+					}
+					
 				}
 				
-				String messageFile = message.getToUserName() + message.getToUserID()+ ".txt";
+				//then add the message to the User's inbox file
+				String messageFile = message.getToUserName() + message.getToUserID()+ "Inbox" + ".txt";
 				File sendFile = new File(messageFile);
-				FileWriter type = new FileWriter(sendFile, true);
+				FileWriter type = new FileWriter(sendFile, true); //opens file in append mode
+				
 				type.write(message.getContents() +  "\n" + message.getFromUserName());
 				type.write("\r\n");
 				type.close();
+				
 				create.setContents("Success");
 				Send = new Message(create);// create an accept message 
 		    	out.writeObject(Send);//send success message to sender
@@ -342,13 +337,9 @@ public class UserManager {
 		}
 	}
 	
-	public void deleteUser(Socket clientSocket, Message message, Socket removeSocket)
+	public int deleteUser(ObjectOutputStream out, Message message)
 	{
 		try {
-			//establish a one way connection
-			OutputStream outputStream = clientSocket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
-			
 			//message variable
 			Message Send;
 			MessageCreator create;
@@ -363,7 +354,7 @@ public class UserManager {
 			if (input == null)
 			{
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 			}
 			
 		    //split the given string by using space as delimiter
@@ -372,31 +363,44 @@ public class UserManager {
 		    if (split.length != 1)
 		    {
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 		    }
 		    
-		    
+		    String removeName = split[0];
 		    //check if already exists inorder to remove
 		    if (validUsers.containsKey(split[0]))
 		    {
-		    	validUsers.remove(split[0]);
+		    	//get extra details of account being deleted
+		    	int removeID = getUserID(removeName);
+		    	
+		    	//remove from all local data
+		    	userIDToUsername.remove(removeID);
+		    	usernameToUserID.remove(removeName);
+		    	activeUsers.remove(removeName);
+		    	allUsernames.remove(removeName);
+		    	allUsers.remove(removeName);
+		    	validUsers.remove(removeName);
+		    	
+		    	//return a success message
 		    	create.setContents("Success");
 				Send = new Message(create);// create an accept message
 		    	out.writeObject(Send);//send success message
 		    	modified = true;
 		    	
-		    	//not sure if i should close the socket of the person being removed
-		    	
-		    	return;
+		    	//return the removed user id
+		    	return removeID;
 		    }
 		    
-		    out.writeObject(Send); //send deny if not an existing account
+		    out.writeObject(Send);
+		    return -1;//send deny if not an existing account
 		    
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
+		return -1;
+		
 	}
 	
 	public void saveUsers()
@@ -430,35 +434,45 @@ public class UserManager {
 		
 	}
 	
-	public void logout(String username, Socket socket)
+	public Boolean logout(ObjectOutputStream out, Message message)
 	{
 		
 		try
 		{
-			//make one way connection
-			OutputStream outputStream = socket.getOutputStream();
-			ObjectOutputStream out = new ObjectOutputStream(outputStream);
-		
 			//message variable
 			Message Send;
 			MessageCreator create;
 			create = new MessageCreator(MessageType.LOGOUT); //make logout message
+			create.setContents("Error"); 
+			Send = new Message(create);// have message ready to return a deny
 			
-			activeUsers.remove(username); // remove from list of active users
-			create.setContents("Success");
-			Send = new Message(create);// create a success message
-			out.writeObject(Send); //send the message
+			//get username
+			String username = message.getContents();
+			
+			if(username == null)
+			{
+				out.writeObject(Send);
+				return false;
+			}
 			
 			
-			//ATTENTION!!!
-			//not sure if I have to close the user's sockets here
-			
-			
+			//check if actually logged on
+			if(activeUsers.contains(username))
+			{
+				activeUsers.remove(username); // remove from list of active users
+				create.setContents("Success");
+				Send = new Message(create);// create a success message
+				out.writeObject(Send); //send the message
+				return true;
+			}
+			out.writeObject(Send);
+			return false;
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
+		return false;
 		
 	}
 	//private void checkValid(input)
