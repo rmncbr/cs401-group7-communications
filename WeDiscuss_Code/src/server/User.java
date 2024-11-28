@@ -6,7 +6,7 @@ import java.io.*;
 
 import shared.Message;
 
-public class User {
+public class User implements Serializable{
 	//static counter to generate unique IDs
 	//private static int IDCounter = 0;
 	
