@@ -6,183 +6,514 @@ import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import server.User;
 import shared.*;
 
 public class ServerTest {
-	private static ConcurrentHashMap<Socket, String> clientSockets = new ConcurrentHashMap<Socket, String>();
-	private static String userName = "123";
-	private static String password = "456";
+	private ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients;
+	private ConcurrentHashMap<Integer, Thread> clientThreads;
+	private ServerSocket serverSocket;
+	private int port;
+	private String serverIP;
+	private boolean running;
+	private ExecutorService executorService;
+	private static final int MAX_THREADS = 10;
 	
+	private ConcurrentHashMap<Integer, String> userIDToUsername = new ConcurrentHashMap<Integer, String>(); // id to username
+	private ConcurrentHashMap<String, Integer> usernameToUserID = new ConcurrentHashMap<String, Integer>(); // username to id
+	private ConcurrentHashMap<String, User> allUsers = new ConcurrentHashMap<String, User>(); // map of all existing users to usernames
+	
+	public ServerTest(int port) throws UnknownHostException {
+		this.port = port;
+		this.serverIP = InetAddress.getLocalHost().getHostAddress().trim();
+		this.running = false;
+		this.listOfClients = new ConcurrentHashMap<>();
+		this.clientThreads = new ConcurrentHashMap<>();
+		this.executorService = Executors.newFixedThreadPool(MAX_THREADS);
+	}
 	
 	public static void main(String[] args) throws IOException, ClassNotFoundException{
-		int serverPort = 8899;
-		ServerSocket serverSocket = new ServerSocket(serverPort);
-		String serverIP = InetAddress.getLocalHost().getHostAddress().trim();
-		System.out.println("IPV4 Adress : " + serverIP + " | Port : " + serverPort);
+		ServerTest server = new ServerTest(8080); //temp port for testing
+		server.start();	
+	}
+	
+	public void start() {
+		running = true;
+		Thread listenThread = new Thread(() -> listenForConnections());
+		listenThread.start();
+	}
+	
+	public void stop() {
+		running = false;
 		
-		// In real implementation, probably need to use a thread pool
-		while(true) {
-			// Listen for connections
-			Socket listenSocket = serverSocket.accept();
-			clientHandle ch = new clientHandle(listenSocket, clientSockets);
-			new Thread(ch).start();
+		try {
+			if (serverSocket != null && !serverSocket.isClosed()) {
+				serverSocket.close();
+				System.out.println("Server stopped.");
+			}
+		} catch (IOException e) {
+			System.out.println("Error closing server: " + e.getMessage());
 		}
-		
+	}
+	
+	/*
+	public UserManager getUserManager() {
+		return userManager;
 		
 	}
 	
-	private static class clientHandle implements Runnable{
-		private Socket socket;
-		private ConcurrentHashMap<Socket, String> clientSockets = null;
-		private ObjectOutputStream out;
-		private ObjectInputStream in;
-		private InetAddress clientIP;
-		private Integer clientPort;
-		
-		clientHandle(Socket socket, ConcurrentHashMap<Socket, String> clientSockets) throws IOException{
-			this.socket = socket;
-			this.clientIP = socket.getInetAddress();
-			this.clientPort = socket.getPort();
-			
-			this.clientSockets = clientSockets;
-			this.out = new ObjectOutputStream(socket.getOutputStream()); // For Write
-			this.in = new ObjectInputStream(socket.getInputStream()); // For Read
-			System.out.println("New Thread! From: " + socket.getLocalSocketAddress());
+	public LogManager getLogManager() {
+		return logManager;
+	}
+	
+	public ChatroomManager getChatroomManager() {
+		return chatroomManager;
+	}
+	*/
+	
+	public ConcurrentHashMap<Integer, ObjectOutputStream> getListOfClients() {
+		return listOfClients;
+	}
+	
+	public ObjectOutputStream getSocketForUser(Integer userID) {
+		return listOfClients.get(userID);
+	}
+	
+	public ServerSocket getServerSocket() {
+		return serverSocket;
+	}
+	
+	public void listenForConnections() {
+		try {
+			serverSocket = new ServerSocket(port);
+			System.out.println("Server started on IPV4 Address: " +  serverIP + " Port: " + port);
+			while (true) {
+				Socket clientSocket = serverSocket.accept();
+				System.out.println("New Connection! From: " + clientSocket.getLocalSocketAddress());
+				Thread processThread = new Thread(() -> processResponse(clientSocket));
+				executorService.submit(processThread);
+			}
+		} catch (IOException e) {
+			System.err.println("Server connection error: " + e.getMessage());
 		}
-
-		@Override
-		public void run() {
-			// Read Message
-			try {
-				while(true) {
-					if(socket.isClosed()) break;
-					Message message = (Message) in.readObject();
-					
-					MessageType type = message.getMessageType();
-					System.out.println("Received Message: ");
-					printMessage(message, socket);
-					
-					switch(type) {
-						case LOGIN:
-							handleLogin(message);
-							break;
-						case UTU:
-							handleText(message);
-							break;
-						case LOGOUT:
-							if(handleLogout(message)) {
-								return;
+		finally {
+			stop();
+		}
+	}
+	
+	public void processResponse(Socket clientSocket) {
+		//Create appropriate Message objects and route them 
+		//to the correct handler based on message type
+		int userID = -1;
+		ObjectInputStream input = null;
+		ObjectOutputStream output = null;
+		String clientIP = clientSocket.getLocalAddress().getHostAddress().trim();
+		
+		try {
+			
+			input = new ObjectInputStream(clientSocket.getInputStream());
+			output = new ObjectOutputStream(clientSocket.getOutputStream());
+			
+			while(running) {
+				// If thread stopped for w/e reason (User deletion) stop processing & shutdown
+			    if (Thread.interrupted()) {
+			        System.out.println("Thread interrupted, shutting down for user: " + userID);
+			        closeResources(clientSocket, input, output, userID);
+			    }
+				
+				Message message = (Message) input.readObject();
+				
+				if(message == null) continue;
+				
+				System.out.println("Message recieved from client: ");
+				printMessage(message);
+				
+				MessageType type = message.getMessageType();
+				
+				
+				switch(type) {
+					case LOGIN:
+							System.out.println("Handling login...");
+							userID = handleLogin(message, output);
+							if(userID != -1) {
+								// System.out.println("LOGIN USER ID: " + userID);
+								listOfClients.put(userID, output);
+								clientThreads.put(userID, Thread.currentThread());
 							}
-							continue;
-						default:
-							MessageCreator messageCreator = new MessageCreator(MessageType.LOGIN);
-							sendMessage(messageCreator.createMessage());
-					}
-				}
-			}
-			catch(IOException | ClassNotFoundException e){
-				System.err.println("Error in client handle run method: " + e.getMessage());
-			}
-			finally {
-				closeResources();
+						break;
+					case LOGOUT:
+							if(handleLogout(message, output, clientIP, userID)) {
+								closeResources(clientSocket, input, output, userID);
+								clientThreads.remove(userID);
+							}
+						break;
+					case ADDUSER:
+							// handleAddUser()
+						break;
+					case DELUSER:
+							int delUser = handleDelUser(message, output);
+							if(delUser != -1) {
+								Thread clientThread = clientThreads.get(delUser);
+								if(clientThread != null) {
+									clientThread.interrupt();
+								}
+							}
+						break;
+					case CPWD:
+							handleChangePassword(message, output);
+						break;
+					case GUL:
+							// log
+						break;
+					case GCL:
+							// log
+						break;
+					case CC:
+							// handleCreateChatroom();
+						break;
+					case IUC:
+							// handleInviteUserToChatroom();
+						break;
+					case JC:
+							// handleJoinChatroom();
+						break;
+					case LC:
+							// handleLeaveChatroom();
+						break;
+					case UTU:
+							handleSendUserMessage(message, output);
+						break;
+					case UTC:
+							// handleSendChatroomMessage();
+						break;
+					default:
+						break;
+				}	
 			}
 			
+			System.out.println("All messages processed, ending server");
+			stop();
+		}
+		catch(IOException | ClassNotFoundException e) {
+			System.err.println("Error processing Client Message: " + e.getMessage());
+		}
+		finally {
+			clientThreads.remove(userID);
+			closeResources(clientSocket, input, output, userID);
 		}
 		
-		private void handleLogin(Message message) {
+	}
+		
+	private Integer handleLogin(Message message, ObjectOutputStream out) {
+		try {
+			//message variable
+			Message Send;
+			MessageCreator create;
+			create = new MessageCreator(MessageType.LOGIN);
+			create.setContents("Error"); 
+			Send = create.createMessage();// have message ready to return a deny
 			
-			String contents = message.getContents();
+			String input = message.getContents();
 			
-			String[] creds = contents.split("\\|"); 
+			if(input == null) {
+				System.out.println("No Message Contents!");
+				sendMessage(Send, out);
+				return -1;
+			}
 			
+			String[] split = input.split("\\s+");
+		    if (split.length != 2)
+		    {
+		    	System.out.println("Not Enough Message Contents!");
+		    	sendMessage(Send, out);
+				return -1;
+		    }
+		    
+		    User user = new User(split[0], split[1], true);
+		    
+		    System.out.println(user.getID() + ", " + user.getUsername());
+		    
+		    create.setUser(user);
+		    create.setContents("Success");
+		    create.setToUserID(user.getID());
+		    create.setToUserName(user.getUsername());
+		    
+		    userIDToUsername.put(user.getID(), user.getUsername());
+		    usernameToUserID.put(user.getUsername(), user.getID());
+		    allUsers.put(user.getUsername(), user);
+		    
+		    create.setUserMap(userIDToUsername);
+		    
+		    sendMessage(create.createMessage(), out);
+		    sendUserMapUpdates(user.getID(), true);
+		    
+		    return user.getID();
+		}
+		catch(IOException e) {
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	private Boolean handleLogout(Message message, ObjectOutputStream out, String clientIP, Integer userID) {
+		MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
+		messageCreator.setContents("Success");
+		try {
+			sendMessage(messageCreator.createMessage(), out);
+			System.out.println("Ending connection with: ");
+			System.out.println(clientIP);
+			return true;
+		} catch (IOException e) {
+			System.err.println("Error during logout processing!");
+			messageCreator.setContents("Error");
 			try {
-				MessageCreator messageCreator = new MessageCreator(MessageType.LOGIN);
-				if(creds[0].equals(userName) && creds[1].equals(password)) {
-					messageCreator.setContents("SUCCESS");
-					sendMessage(messageCreator.createMessage());
+				sendMessage(messageCreator.createMessage(), out);
+				return false;
+			} catch (IOException e1) {
+				System.err.println("Error during logout processing!");
+				e1.printStackTrace();
+				return false;
+			}
+		}
+	}
+	
+	private Integer handleDelUser(Message message, ObjectOutputStream out) {
+		try {
+			//message variable
+			Message Send;
+			MessageCreator create;
+			create = new MessageCreator(MessageType.DELUSER);
+			create.setContents("Error"); 
+			Send = create.createMessage();// have message ready to return a deny
+			
+			
+			String input = message.getContents();
+			
+			//check for bad input
+			if (input == null)
+			{
+				sendMessage(Send, out);
+				return -1;
+			}
+			
+		    //split the given string by using space as delimiter
+		    String[] split = input.split("\\s+");
+		    //check for bad input (username)
+		    if (split.length != 1)
+		    {
+		    	sendMessage(Send, out);
+				return -1;
+		    }
+		    
+		    String removeName = split[0];
+		    //check if already exists inorder to remove
+		    if (allUsers.containsKey(split[0]))
+		    {
+		    	//get extra details of account being deleted
+		    	int removeID = usernameToUserID.get(removeName);
+		    	
+		    	ObjectOutputStream delOut = listOfClients.get(removeID);
+		    	create.setContents("Disconnect");
+		    	delOut.writeObject(create.createMessage());
+		    	clientThreads.get(removeID).interrupt();
+		    	
+		    	//remove from all local data
+		    	sendUserMapUpdates(removeID, false);
+		    	clientThreads.remove(removeID);
+		    	
+		    	//return a success message
+		    	create.setContents("Success");
+		    	sendMessage(create.createMessage(), out);
+		    	
+		    	//return the removed user id
+		    	return removeID;
+		    }
+		    
+		    sendMessage(Send, out);
+		    return -1;//send deny if not an existing account
+		    
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		return -1;
+	}
+	
+	private void handleSendUserMessage(Message message, ObjectOutputStream outFrom) {
+		try {
+			//message variable
+			Message Send;
+			MessageCreator create;
+			create = new MessageCreator(MessageType.UTU);
+			create.setToUserID(message.getToUserID());
+			create.setToUserName(message.getToUserName());
+			create.setFromUserID(message.getFromUserID());
+			create.setFromUserName(message.getFromUserName());
+			create.setContents("Error"); 
+			Send = new Message(create);// have message ready to return a deny
+			
+			String input = message.getContents();
+			
+			if (input == null)
+			{
+				//don't send a message
+				System.out.println("No Message Contents!");
+				sendMessage(Send, outFrom); //send the deny message
+				return;
+			}
+			
+			if(userIDToUsername.containsKey(message.getToUserID())) {
+				if(listOfClients.containsKey(message.getToUserID())) {
+					create.setContents(input);
+					ObjectOutputStream outTo = listOfClients.get(message.getToUserID());
+					sendMessage(new Message(create), outTo);
 				}
 				else {
-					messageCreator.setContents("FAIL");
-					sendMessage(messageCreator.createMessage());
-					closeResources();
-					System.out.println("Login Failed, Disconnecting");
+					// Add to User Inbox
 				}
-			} catch (IOException e) {
-				System.err.println("Error during login processing!");
-				closeResources();
+				create.setContents("Success");
+			    sendMessage(new Message(create), outFrom);
+			    return;
 			}
-			
-			
+
+			create.setContents("Error");
+			sendMessage(new Message(create), outFrom); //send the deny message
 			
 		}
-		
-		private void handleText(Message message) {
-			MessageCreator messageCreator = new MessageCreator(MessageType.UTU);
-			String text = message.getContents().toLowerCase();
-			messageCreator.setContents(text);
-			
-			try {
-				sendMessage(messageCreator.createMessage());
-			} catch (IOException e) {
-				System.err.println("Error during sending message!");
-			}
+		catch(IOException e) {
+			e.printStackTrace();
 		}
 		
-		private Boolean handleLogout(Message message) {
-			MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
-			messageCreator.setContents("SUCCESS");
-			try {
-				sendMessage(messageCreator.createMessage());
-				System.out.println("Ending connection with: ");
-				System.out.println(clientIP);
-				socket.close();
-				return true;
-			} catch (IOException e) {
-				System.err.println("Error during login processing!");
-				messageCreator.setContents("FAIL");
+	}
+	
+	private void handleChangePassword(Message message, ObjectOutputStream out) {
+		try {
+			
+			//message variable
+			Message Send;
+			MessageCreator create;
+			create = new MessageCreator(MessageType.CPWD);
+			create.setContents("Error"); 
+			Send = new Message(create);// have message ready to return a deny
+			
+			
+			String input = message.getContents();
+			
+			//check for bad input
+			if (input == null)
+			{
+				sendMessage(Send, out);
+				return;
+			}
+			
+		    //split the given string by using space as delimiter
+		    String[] split = input.split("\\s+");
+		    //check for bad input (username password)
+		    if (split.length != 2)
+		    {
+		    	sendMessage(Send, out);
+				return;
+		    }
+		    
+		    
+		    //check if already exists inorder to change
+		    if (allUsers.containsKey(split[0]))
+		    {
+		    	User toChange = allUsers.get(split[0]);
+		    	toChange.setPassword(split[1]);
+		    	
+		    	create.setContents("Success");
+				Send = new Message(create);// create an accept message
+				sendMessage(Send, out);
+		    	return;
+		    }
+		    
+		    sendMessage(Send, out);
+		    
+			}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	// Someone disconnects, name can be changed
+	private void sendUserMapUpdates(Integer userID, Boolean addUser) {
+		MessageCreator messageCreator = new MessageCreator(MessageType.UPDATEUM);
+		messageCreator.setFromUserID(userID);
+		if(addUser) {	
+			messageCreator.setContents("Add");
+			messageCreator.setFromUserName(userIDToUsername.get(userID));
+			
+			// Synchronizes the sending of the update message!
+			listOfClients.values().parallelStream().forEach(output ->{
 				try {
-					sendMessage(messageCreator.createMessage());
-				} catch (IOException e1) {
-					System.err.println("Error during logout processing!");
-					e1.printStackTrace();
+					output.writeObject(messageCreator.createMessage());
+					output.flush();
 				}
-				e.printStackTrace();
-			}
-			finally {
-				closeResources();
-			}
+				catch(IOException e) {
+					System.err.println("Error sending update to a client!");
+				}
+				
+			});
+		}
+		else {
+			listOfClients.remove(userID);
+			usernameToUserID.remove(userIDToUsername.get(userID));
+			allUsers.remove(userIDToUsername.get(userID));
+			userIDToUsername.remove(userID);
+			messageCreator.setContents("Remove");
 			
-			return false;	
+			
+			// Synchronizes the sending of the update message!
+			listOfClients.values().parallelStream().forEach(output ->{
+				try {
+					output.writeObject(messageCreator.createMessage());
+					output.flush();
+				}
+				catch(IOException e) {
+					System.err.println("Error sending update to a client!");
+				}
+				
+			});
 		}
 		
-		private void sendMessage(Message message) throws IOException {
-			// Send a message to client
-			System.out.println("Sending...");
-			printMessage(message, null);
-			out.writeObject(message);
-			out.flush();
-		}
+	}
 		
-		private void printMessage(Message msg, Socket socket) {
-			System.out.println("From : " + clientIP);
-			System.out.println("Type :" + msg.getMessageType());
-			System.out.println("Contents : " + msg.getContents());
-			System.out.println("--------------------------------\n");
+	private void sendMessage(Message message, ObjectOutputStream out) throws IOException {
+		// Send a message to client
+		System.out.println("Sending...");
+		printMessage(message);
+		out.writeObject(message);
+		out.flush();
+	}
+	
+	public void closeResources(Socket clientSocket, ObjectInputStream input, ObjectOutputStream output, Integer UserID) {
+		try {
+			if(clientSocket != null) clientSocket.close();
+			if(input != null) input.close();
+			if(output != null) output.close();
+			sendUserMapUpdates(UserID, false);
 		}
-		
-		private void closeResources() {
-			try {
-				if(in != null) in.close();
-				if(out != null) out.close();
-				if(socket != null) socket.close();
-			}
-			catch(IOException e) {
-				System.err.println("Error closing resources!");
-				e.printStackTrace();
-			}
+		catch(IOException e) {
+			System.err.println("Error closing resources!");
+			e.printStackTrace();
 		}
-		
+	}
+	
+	private void printMessage(Message msg) {
+		System.out.println("From : " + msg.getFromUserName());
+		System.out.println("ID : " + msg.getFromUserID());
+		System.out.println("To : " + msg.getToUserName());
+		System.out.println("ID : " + msg.getToUserID());
+		System.out.println("Type : " + msg.getMessageType());
+		System.out.println("Contents : " + msg.getContents());
+		System.out.println("--------------------------------\n");
 	}
 }

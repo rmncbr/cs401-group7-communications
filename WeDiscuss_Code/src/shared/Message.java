@@ -32,6 +32,7 @@ public class Message implements Serializable{
 		this.toUserName = messageCreator.getToUserName();
 		this.toUserID = messageCreator.getToUserID();
 		this.fromUserName = messageCreator.getFromUserName();
+		this.fromUserID = messageCreator.getFromUserID();
 		this.toChatroomID = messageCreator.getChatroomID();
 		this.messageID = messageIDCounter++;
 		this.messageType = messageCreator.getMessageType();

@@ -10,19 +10,20 @@ import shared.*;
 
 public class ConsoleClient {
 	
-	private User user = null;
-	private ConsoleUI consoleUI; // Reference to GUI, used for updating GUI w/ received messages
+	// private ClientUI clientGui; // Reference to GUI, used for updating GUI w/ received messages
+	private ConsoleUI clientGui;
 	private Socket serverSocket;
 	private String serverIP;
 	private int serverPort;
 	private ObjectOutputStream toServer;
 	private ObjectInputStream fromServer;
-	private volatile Boolean connected = false; // All threads can access this boolean!
+	private volatile Boolean connected = false;
+	private User user;
 
 	private ConcurrentLinkedQueue<Message> messageQueue = new ConcurrentLinkedQueue<Message>();
 	
 	public ConsoleClient(ConsoleUI gui) {
-		consoleUI = gui;
+		clientGui = gui;
 	}
 	
 	public String getServerIP() {return this.serverIP;}
@@ -41,7 +42,6 @@ public class ConsoleClient {
 			
 			System.out.println("Connected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
 			
-			
 			// Listener thread to listen for messages
 			new Thread(new listenForMessages()).start();
 			// Reader thread to read incoming messages
@@ -57,13 +57,35 @@ public class ConsoleClient {
 				connected = false;
 				throw e;
 			}
+
 		}
+		
+	}
+	
+	private void reconnect() throws IOException{
+		// Close the old socket & Associated resources
+		if(serverSocket != null && !serverSocket.isClosed()) {
+			closeResources();
+		}
+		
+		connected = true;
+		serverSocket = new Socket(serverIP, serverPort);
+		toServer = new ObjectOutputStream(serverSocket.getOutputStream());
+		fromServer = new ObjectInputStream(serverSocket.getInputStream());
+		
+		System.out.println("Reconnected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
+		
+		
+		// Listener thread to listen for messages
+		new Thread(new listenForMessages()).start();
+		// Reader thread to read incoming messages
+		new Thread(new readMessages()).start();
 		
 	}
 	
 	public void sendLoginRequest(String userName, String password) throws IOException {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGIN);
-		messageCreator.setContents(userName + "|" + password);
+		messageCreator.setContents(userName + " " + password);
 		
 		sendMessage(messageCreator.createMessage());
 		
@@ -253,33 +275,13 @@ public class ConsoleClient {
 	
 	private void sendMessage(Message message) throws IOException {
 		try {
+			System.out.println(message.getContents() + ", " + message.getMessageType());
 			toServer.writeObject(message);
 		}
 		catch(IOException e) {
 			System.out.println("Failed sending message!");
 			throw e;
 		}
-	}
-	
-	private void reconnect() throws IOException{
-		// Close the old socket & Associated resources
-		if(serverSocket != null && !serverSocket.isClosed()) {
-			closeResources();
-		}
-		
-		connected = true;
-		serverSocket = new Socket(serverIP, serverPort);
-		toServer = new ObjectOutputStream(serverSocket.getOutputStream());
-		fromServer = new ObjectInputStream(serverSocket.getInputStream());
-		
-		System.out.println("Reconnected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
-		
-		
-		// Listener thread to listen for messages
-		new Thread(new listenForMessages()).start();
-		// Reader thread to read incoming messages
-		new Thread(new readMessages()).start();
-		
 	}
 	
 	/* Once connected to the sever, a separate thread only listens for messages from server, adds them to a queue for readMessages to consume */
@@ -320,61 +322,66 @@ public class ConsoleClient {
 				switch(type) {
 					case LOGIN:
 						// Login fail
-						if(!message.getContents().equals("SUCCESS")) {
-							throw new IllegalStateException("Bad Login Credentials");
+						clientGui.initUpdate(message);
+						if(message.getContents().equals("Success")) {
+							user = message.getUser();
 						}
-						// user = message.getUser();
-						consoleUI.initUpdate(message);
 						break;
 					case LOGOUT:
-						if(message.getContents().equals("SUCCESS")) {
+						if(message.getContents().equals("Success")) {
 							connected = false;
 						}
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case ADDUSER:
 						// confirm message	
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case DELUSER:
 						// confirm message
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case CPWD:
 						// confirm message
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case GUL:
 						// message w/ log contents
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case GCL:
 						// message w/ log contents
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case CC:
 						// messge w/ chatroom id
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);;
 						break;
 					case IUC:
 						// message w/ chatroom
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case JC:
 						// message w/ chatroom
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case LC:
 						// confirm message
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case UTU:
 						// message w/ message contents & info
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case UTC:
 						// message w/ message contents add to chatroom
-						consoleUI.update(message);
+						clientGui.addToMessageQueue(message);
+						break;
+					case UPDATEUM:
+						clientGui.addToMessageQueue(message);
+						break;
+					case UPDATECM:
+						clientGui.addToMessageQueue(message);
 						break;
 					default:
 						break;
@@ -386,7 +393,7 @@ public class ConsoleClient {
 			while(!messageQueue.isEmpty()) {
 				Message message = messageQueue.poll();
 				if(message != null) {
-					consoleUI.update(message);
+					clientGui.addToMessageQueue(message);
 				}
 			}
 			
@@ -394,6 +401,7 @@ public class ConsoleClient {
 			closeResources();
 		}
 	}
+
 	
 	private void closeResources() {
 		try {
