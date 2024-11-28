@@ -1,12 +1,14 @@
 package server;
-import java.io.Serializable;
 import java.util.*;
+import java.io.*;
+
+
 
 import shared.Message;
 
-public class User implements Serializable{
+public class User {
 	//static counter to generate unique IDs
-	private static int IDCounter = 0;
+	//private static int IDCounter = 0;
 	
 	private String username;
 	private String password;
@@ -16,16 +18,125 @@ public class User implements Serializable{
 	private List<Message> messageInbox;
 	private List<Integer> involvedChatrooms;
 	
+
+	
 	//Constructor
-	public User(String username, String password, boolean adminStatus) {
+	public User(String username, String password, boolean adminStatus, int userID) {
 		this.username = username;
 		this.password = password;
 		this.adminStatus = adminStatus;
-		this.ID = ++IDCounter;
+		this.ID = userID;
 		this.status = false; //Initially offline
-		this.messageInbox = new ArrayList<>();
-		this.involvedChatrooms = new ArrayList<>();
+		this.messageInbox = loadMessageInbox();
+		this.involvedChatrooms = loadChatrooms();
 	}
+	
+		
+		
+	//Load messages from inbox file
+	private List<Message> loadMessageInbox() {
+		List<Message> messages = new ArrayList<>();
+		String filename = username + ID + "inbox.text";
+			
+		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
+				while (true) {
+					try {
+						Message message = (Message) ois.readObject();
+						messages.add(message);
+					} catch (EOFException e) {
+						break;
+					}
+				}
+		} catch (FileNotFoundException e) {
+			//if file does not exist, create it
+			//createFile(filename);
+		} catch (IOException | ClassNotFoundException e) {
+			System.err.println("Error reading inbox file: " + e.getMessage());
+		}
+			
+		return messages;
+	}
+		
+
+	//Load chatrooms IDs from the charooms file
+	private List<Integer> loadChatrooms() {
+		
+		List<Integer> chatrooms = new ArrayList<>();			
+		String filename = username + ID + "chatrooms.text";
+				
+		try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
+				
+			String line;		
+			while ((line = reader.readLine()) != null) {
+					
+				try {				
+					chatrooms.add(Integer.parseInt(line.trim()));			
+				} catch (NumberFormatException e) {				
+					System.err.println("Invcalid chatroom ID in file: " + line);			
+				}			
+			}
+						
+		} catch (FileNotFoundException e) {		
+			//if file not found, create it?				
+			//createFile(filename);	
+			System.err.println("Error. File name not found: " + e.getMessage());
+		} catch (IOException e) {	
+			System.err.println("Error reading chatrooms file: " + e.getMessage());
+		}
+		
+		return chatrooms;
+		
+	}
+		
+	//should we create a file if the file is not found??
+	/*private void createFile(String filename) {		
+		try {			
+			File file = new File(filename);			
+			file.createNewFile();
+			
+		} catch (IOException e) {				
+			System.err.println("Error creating file " + filename + ": " + e.getMessage());			
+		}
+		
+	}*/
+	
+	
+	
+	//Save message to inbox file
+	private void saveMessageToFile(Message message) {
+		String filename = username + ID + "inbox.text";
+		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename, true))) {
+			oos.writeObject(message);
+		} catch (IOException e) {
+			System.err.println("Error writing to inbox file: " + e.getMessage());
+		}
+	}
+		
+		
+	//save chatroom ID to chatrooms file
+	private void saveChatroomToFile(int chatroomID) {
+		String filename = username + ID + "chatrooms.text";
+		try (PrintWriter writer = new PrintWriter(new FileWriter(filename, true))) {
+			writer.println();
+		} catch (IOException e) {
+			System.err.println("Error writing to chatrooms file: " + e.getMessage());
+		}
+	}	
+		
+	//display messages in inbox with console formatting for testing without GUI use
+	//thought this could be useful 
+	public void displayMessageInboxToConsole() {
+		for (Message message : messageInbox) {
+			System.out.println("From: " + message.getFromUserName());
+			System.out.println("Date: " + message.getDateSent());
+			System.out.println("Type: " + message.getMessageType());
+			System.out.println("Content: " + message.getContents());
+			System.out.println("--------------------");
+		}
+	}
+	
+	
+	
 	
 	//Get user's username
 	//return username
@@ -64,20 +175,19 @@ public class User implements Serializable{
 	}
 	
 	//Add a chatroom to the user's involved chatrooms list
+	//Update: added functionality to save inovolved chatroomID to chatroom file
 	public void addChatroom(int chatroomID) {
 		if (!involvedChatrooms.contains(chatroomID)) {
 			involvedChatrooms.add(chatroomID);
+			saveChatroomToFile(chatroomID);
 		}
 	}
 	
-	//Set a new password for the user
-	public void setPassword(String password) {
-		this.password = password;
-	}
-	
 	//Add a message to the user's inbox
+	//Update: added ability to save message to file
 	public void addToInbox(Message message) {
 		messageInbox.add(message);
+		saveMessageToFile(message);
 	}
 	
 	//Display all messages in the user's inbox
@@ -87,9 +197,17 @@ public class User implements Serializable{
 		}
 	}
 	
+	//Set a new password for the user
+	public void setPassword(String password) {
+		this.password = password;
+	}
+		
 	//Set the user's online status
 	protected void setStatus(boolean status) {
 		this.status = status;
 	}
-
+	
+	
+	
+	
 }
