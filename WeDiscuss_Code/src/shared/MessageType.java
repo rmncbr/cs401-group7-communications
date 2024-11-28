@@ -15,4 +15,6 @@ public enum MessageType {
 	LC, // Leave Chat room
 	UTU, // User to User
 	UTC, // User to Chat room
+	UPDATEUM, // Any data updates from server->client about Usermap
+	UPDATECM, // Any data updates from server->client aboud Chatroommap
 }

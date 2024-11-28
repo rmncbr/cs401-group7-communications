@@ -123,7 +123,7 @@ public class ServerTest {
 				// If thread stopped for w/e reason (User deletion) stop processing & shutdown
 			    if (Thread.interrupted()) {
 			        System.out.println("Thread interrupted, shutting down for user: " + userID);
-			        closeResources(clientSocket, input, output);
+			        closeResources(clientSocket, input, output, userID);
 			    }
 				
 				Message message = (Message) input.readObject();
@@ -147,9 +147,8 @@ public class ServerTest {
 							}
 						break;
 					case LOGOUT:
-							if(handleLogout(message, output, clientIP)) {
-								closeResources(clientSocket, input, output);
-								listOfClients.remove(userID);
+							if(handleLogout(message, output, clientIP, userID)) {
+								closeResources(clientSocket, input, output, userID);
 								clientThreads.remove(userID);
 							}
 						break;
@@ -204,11 +203,8 @@ public class ServerTest {
 			System.err.println("Error processing Client Message: " + e.getMessage());
 		}
 		finally {
-			if(userID != -1) {
-				listOfClients.remove(userID);
-				clientThreads.remove(userID);
-			}
-			closeResources(clientSocket, input, output);
+			clientThreads.remove(userID);
+			closeResources(clientSocket, input, output, userID);
 		}
 		
 	}
@@ -254,6 +250,7 @@ public class ServerTest {
 		    create.setUserMap(userIDToUsername);
 		    
 		    sendMessage(create.createMessage(), out);
+		    sendUserMapUpdates(user.getID(), true);
 		    
 		    return user.getID();
 		}
@@ -263,7 +260,7 @@ public class ServerTest {
 		return -1;
 	}
 	
-	private Boolean handleLogout(Message message, ObjectOutputStream out, String clientIP) {
+	private Boolean handleLogout(Message message, ObjectOutputStream out, String clientIP, Integer userID) {
 		MessageCreator messageCreator = new MessageCreator(MessageType.LOGOUT);
 		messageCreator.setContents("Success");
 		try {
@@ -326,9 +323,7 @@ public class ServerTest {
 		    	clientThreads.get(removeID).interrupt();
 		    	
 		    	//remove from all local data
-		    	userIDToUsername.remove(removeID);
-		    	usernameToUserID.remove(removeName);
-		    	allUsers.remove(removeName);
+		    	sendUserMapUpdates(removeID, false);
 		    	clientThreads.remove(removeID);
 		    	
 		    	//return a success message
@@ -447,7 +442,49 @@ public class ServerTest {
 			e.printStackTrace();
 		}
 	}
+	
+	// Someone disconnects, name can be changed
+	private void sendUserMapUpdates(Integer userID, Boolean addUser) {
+		MessageCreator messageCreator = new MessageCreator(MessageType.UPDATEUM);
+		messageCreator.setFromUserID(userID);
+		if(addUser) {	
+			messageCreator.setContents("Add");
+			messageCreator.setFromUserName(userIDToUsername.get(userID));
+			
+			// Synchronizes the sending of the update message!
+			listOfClients.values().parallelStream().forEach(output ->{
+				try {
+					output.writeObject(messageCreator.createMessage());
+					output.flush();
+				}
+				catch(IOException e) {
+					System.err.println("Error sending update to a client!");
+				}
+				
+			});
+		}
+		else {
+			listOfClients.remove(userID);
+			usernameToUserID.remove(userIDToUsername.get(userID));
+			allUsers.remove(userIDToUsername.get(userID));
+			userIDToUsername.remove(userID);
+			messageCreator.setContents("Remove");
+			
+			
+			// Synchronizes the sending of the update message!
+			listOfClients.values().parallelStream().forEach(output ->{
+				try {
+					output.writeObject(messageCreator.createMessage());
+					output.flush();
+				}
+				catch(IOException e) {
+					System.err.println("Error sending update to a client!");
+				}
+				
+			});
+		}
 		
+	}
 		
 	private void sendMessage(Message message, ObjectOutputStream out) throws IOException {
 		// Send a message to client
@@ -457,11 +494,12 @@ public class ServerTest {
 		out.flush();
 	}
 	
-	public void closeResources(Socket clientSocket, ObjectInputStream input, ObjectOutputStream output) {
+	public void closeResources(Socket clientSocket, ObjectInputStream input, ObjectOutputStream output, Integer UserID) {
 		try {
 			if(clientSocket != null) clientSocket.close();
 			if(input != null) input.close();
 			if(output != null) output.close();
+			sendUserMapUpdates(UserID, false);
 		}
 		catch(IOException e) {
 			System.err.println("Error closing resources!");

@@ -19,7 +19,6 @@ public class ConsoleUI {
 	private volatile boolean operationCheck = false;
 	
 	private User user;
-	private List<Message> userMessages = Collections.synchronizedList(new ArrayList<Message>()); // Make user Messages Thread Safe
 	
 	// User and chatroom maps caches
 	private ConcurrentMap<Integer, Chatroom> chatrooms = new ConcurrentHashMap<Integer, Chatroom>();
@@ -34,7 +33,7 @@ public class ConsoleUI {
 	private CountDownLatch serverResponse = new CountDownLatch(1);
 	private CountDownLatch displayUpdate = new CountDownLatch(1);
 	
-	
+	private Thread listenThread;
 	// Maybe start another thread that is responsible for displaying chatroom messages?
 	// That way when a User "Joins" A chatroom, the display of all the chatroom messages is constantly
 	// refreshed when a new message comes in
@@ -119,11 +118,9 @@ public class ConsoleUI {
 	}
 	
 	public void start() {
-		Thread listenThread = new Thread(() -> processMessages());
+		listenThread = new Thread(() -> processMessages());
 		
 		isLoggedIn = true;
-        chatrooms.put(1, new Chatroom(1, 1));
-        chatrooms.put(2, new Chatroom(3, 3));
         
         listenThread.start();
         
@@ -182,9 +179,9 @@ public class ConsoleUI {
 		if(message.getContents().equals("Success")) {
 			// Init everything
 			user = message.getUser();
-			System.out.println(user.getID());
-			// userMessages = user.getMessages();
-			// chatrooms = message.getChatrooms();
+			if(!(message.getChatroomMap() == null)) {
+				chatrooms = message.getChatroomMap();
+			}
 			userMap = message.getUserMap();
 			// printMessage(message);
 			userMap.put(user.getID(), user.getUsername());
@@ -199,7 +196,10 @@ public class ConsoleUI {
 			client.sendLogoutRequest();
 			serverResponse.await();
 			
-			if(operationCheck) return true;
+			if(operationCheck) {
+				listenThread.interrupt();
+				return true;
+			}
 		}
 		catch(IOException e) {
 			System.err.println("Logout Request Error!");
@@ -294,6 +294,10 @@ public class ConsoleUI {
 	
 	private void processMessages() {
 		while(true) {
+			
+			if(Thread.interrupted()) {
+				break;
+			}
 			Message message = clientMessages.poll();
 			if(message == null) continue;
 			
@@ -337,6 +341,12 @@ public class ConsoleUI {
 			case UTC:
 				processChatroomMessage(message);
 				break;
+			case UPDATEUM:
+				processUserMapUpdate(message);
+				break;
+			case UPDATECM:
+				//chatroomMap.remove(message.getToChatroomID());
+				break;
 			default:
 				break;
 			}
@@ -345,6 +355,11 @@ public class ConsoleUI {
 	}
 	
 	private void processLogout(Message message) {
+		try {
+			client.sendLogoutRequest();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		serverResponse.countDown();
 	}
 	
@@ -407,7 +422,7 @@ public class ConsoleUI {
 		}
 
 		// Received a message
-		userMessages.add(message);
+		user.addToInbox(message);
 		System.out.println("New Message!");
 		return;
 
@@ -415,6 +430,16 @@ public class ConsoleUI {
 	
 	private void processChatroomMessage(Message message) {
 		
+	}
+	
+	private void processUserMapUpdate(Message message) {
+		if(message.getContents().equals("Add")) {
+			userMap.put(message.getFromUserID(), message.getFromUserName());
+		}
+		else {
+			userMap.remove(message.getFromUserID());
+		}
+		System.out.println("List of Users Update!");
 	}
 	
 	private void doDisplayChatrooms() {
@@ -439,9 +464,7 @@ public class ConsoleUI {
 	private void doDisplayUserInbox() {
 		System.out.println("Inbox:");
 		System.out.println("-----------------------------"); 
-		for(Message message : userMessages) {
-			printMessage(message);
-		}
+		user.displayMessageInbox();
 		System.out.println("-----------------------------"); 
 	}	
 	

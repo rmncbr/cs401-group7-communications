@@ -377,6 +377,12 @@ public class ConsoleClient {
 						// message w/ message contents add to chatroom
 						clientGui.addToMessageQueue(message);
 						break;
+					case UPDATEUM:
+						clientGui.addToMessageQueue(message);
+						break;
+					case UPDATECM:
+						clientGui.addToMessageQueue(message);
+						break;
 					default:
 						break;
 				}	
