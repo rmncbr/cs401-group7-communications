@@ -27,19 +27,6 @@ public class LogManager {
 		logFile = "";
 	}
 
-//	// running thread to listen and record logs 
-//	public void handleClient(Socket socket, Message message) {
-//		try (socket) {
-//			OutputStream outputStream = socket.getOutputStream();
-//			ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-//			objectOutputStream.writeObject(answerLogRequest(message)); 
-//			objectOutputStream.flush();
-//			
-//		} catch (Exception e) {
-//			System.out.println("Error:" + socket);
-//		}
-//	}// handleClient
-
 	public void getUserMessages(ObjectOutputStream output, Message message) {
         int userID = message.getFromUserID(); 
         List<Message> messages = userMessageLogs.getOrDefault(userID, new ArrayList<>());
@@ -52,7 +39,7 @@ public class LogManager {
 	}// getUserMessages
 
 	public void getChatroomMessages(ObjectOutputStream output, Message message) {
-        int chatroomID = message.getToChatroom();  // Assuming the chatroom ID is in the message
+        int chatroomID = message.getToChatroomID(); 
         List<Message> messages = chatroomMessageLogs.getOrDefault(chatroomID, new ArrayList<>());
         
         try {
@@ -61,6 +48,9 @@ public class LogManager {
             e.printStackTrace();
         }
 	}// getChatroomMessages
+	
+	
+	/******/
 
 	public void answerLogRequest(Message message) {
         MessageType type = message.getMessageType();
@@ -74,54 +64,37 @@ public class LogManager {
 	public void storeMessage(Message message) {
 		// Check if the message is addressed to a specific user
 		if (message.getToUserID() >= 0) {
-			// Retrieve the list of messages for this user, or initialize an empty list if
-			// none exists
 			List<Message> userMessages = userMessageLogs.getOrDefault(message.getToUserID(), new ArrayList<>());
-
-			// Add the message to the list
 			userMessages.add(message);
 
-			// Put the updated list back into the map
 			userMessageLogs.put(message.getToUserID(), userMessages);
 		} // if
 
-		// Check if the message is addressed to a specific chatroom
-		if (message.getToChatroom() >= 0) {
-			// Retrieve the list of messages for this chatroom, or initialize an empty list
-			// if none exists
-			List<Message> chatroomMessages = chatroomMessageLogs.getOrDefault(message.getToChatroom(),
-					new ArrayList<>());
-
-			// Add the message to the list
+		
+		if (message.getToChatroomID() >= 0) {
+			List<Message> chatroomMessages = chatroomMessageLogs.getOrDefault(message.getToChatroomID(), new ArrayList<>());
 			chatroomMessages.add(message);
 
-			// Put the updated list back into the map
-			chatroomMessageLogs.put(message.getToChatroom(), chatroomMessages);
+			chatroomMessageLogs.put(message.getToChatroomID(), chatroomMessages);
 		} // if
 
 	}// storeMessage
 
 	public List<Message> getLogs(String filePath) {
-	    // List to hold the loaded messages
 	    List<Message> loadedMessages = new ArrayList<>();
-	    
-	    // Open the log file
 	    File loadLog = new File(filePath);
 	    
 	    try (Scanner scanner = new Scanner(loadLog)) {
-	        
-	        // Loop through the file and process each line
 	        while (scanner.hasNextLine()) {
 	            String data = scanner.nextLine();
 	            String[] values = data.split(",");
 	            
-	            // Ensure the data is in the correct format
-	            if (values.length < 4) continue;  // Basic validation
+	            if (values.length < 4) continue; 
 
 	            // Extract the required information from the file
-	            int id = Integer.parseInt(values[0].trim());  // Message ID
-	            String content = values[1].trim();            // Message content
-	            String timestamp = values[2].trim();          // Timestamp 
+	            int id = Integer.parseInt(values[0].trim());  
+	            String content = values[1].trim();            
+	            String timestamp = values[2].trim();          
 	            MessageType type = MessageType.valueOf(values[3].trim().toUpperCase());  // Message type
 	            
 	            // Create a new MessageCreator object
@@ -154,14 +127,6 @@ public class LogManager {
 	    return loadedMessages;
 	}//getLogs
 
-
-
-	// Message class toString()
-	/*
-	 * @Override public String toString() { return this.getMessageID() + "," +
-	 * this.getContents() + "," + this.getDateSent() + "," + this.getMessageType();
-	 * }
-	 */
 	
 	public static String saveLogs() {
 		StringBuilder result = new StringBuilder(); // to accumulate errors
