@@ -275,7 +275,7 @@ public class ConsoleClient {
 	
 	private void sendMessage(Message message) throws IOException {
 		try {
-			System.out.println(message.getContents() + ", " + message.getMessageType());
+			System.out.println("Sending: " + message.getContents() + ", " + message.getMessageType());
 			toServer.writeObject(message);
 		}
 		catch(IOException e) {

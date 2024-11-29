@@ -28,6 +28,8 @@ public class ServerTest {
 	private ConcurrentHashMap<String, Integer> usernameToUserID = new ConcurrentHashMap<String, Integer>(); // username to id
 	private ConcurrentHashMap<String, User> allUsers = new ConcurrentHashMap<String, User>(); // map of all existing users to usernames
 	
+	private ConcurrentHashMap<Integer, Chatroom> listOfChatrooms = new ConcurrentHashMap<Integer, Chatroom>();
+	
 	public ServerTest(int port) throws UnknownHostException {
 		this.port = port;
 		this.serverIP = InetAddress.getLocalHost().getHostAddress().trim();
@@ -40,9 +42,23 @@ public class ServerTest {
 	public static void main(String[] args) throws IOException, ClassNotFoundException{
 		ServerTest server = new ServerTest(8080); //temp port for testing
 		server.start();	
+
+		
 	}
 	
 	public void start() {
+		MessageCreator messageCreate = new MessageCreator(MessageType.UTC);
+		messageCreate.setContents("Hey!");
+		Chatroom chatroom1 = new Chatroom(0, 1);
+		chatroom1.addMessage(messageCreate.createMessage());
+		chatroom1.addMessage(messageCreate.createMessage());
+		Chatroom chatroom2 = new Chatroom(1, 1);
+		chatroom2.addMessage(messageCreate.createMessage());
+		
+		listOfChatrooms.put(chatroom1.getChatroomID(), chatroom1);
+		listOfChatrooms.put(chatroom2.getChatroomID(), chatroom2);
+		
+		
 		running = true;
 		Thread listenThread = new Thread(() -> listenForConnections());
 		listenThread.start();
@@ -189,7 +205,7 @@ public class ServerTest {
 							handleSendUserMessage(message, output);
 						break;
 					case UTC:
-							// handleSendChatroomMessage();
+							handleSendChatroomMessage(message, listOfClients);
 						break;
 					default:
 						break;
@@ -248,6 +264,7 @@ public class ServerTest {
 		    allUsers.put(user.getUsername(), user);
 		    
 		    create.setUserMap(userIDToUsername);
+		    create.setChatroomMap(listOfChatrooms);
 		    
 		    sendMessage(create.createMessage(), out);
 		    sendUserMapUpdates(user.getID(), true);
@@ -389,6 +406,24 @@ public class ServerTest {
 		catch(IOException e) {
 			e.printStackTrace();
 		}
+		
+	}
+	
+	private void handleSendChatroomMessage(Message message, ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients) {
+		
+		// Synchronizes the sending of the update message!
+		listOfClients.values().parallelStream().forEach(output ->{
+			try {
+				output.writeObject(message);
+				output.flush();
+			}
+			catch(IOException e) {
+				System.err.println("Error sending message to a client!");
+			}
+			
+		});
+		
+		listOfChatrooms.get(message.getToChatroomID()).addMessage(message);
 		
 	}
 	
