@@ -48,8 +48,7 @@ public class User implements Serializable{
 					}
 				}
 		} catch (FileNotFoundException e) {
-			//if file does not exist, create it
-			//createFile(filename);
+			System.err.out.println("Error. File name not found: " + e.getMessage());
 		} catch (IOException | ClassNotFoundException e) {
 			System.err.println("Error reading inbox file: " + e.getMessage());
 		}
@@ -77,8 +76,6 @@ public class User implements Serializable{
 			}
 						
 		} catch (FileNotFoundException e) {		
-			//if file not found, create it?				
-			//createFile(filename);	
 			System.err.println("Error. File name not found: " + e.getMessage());
 		} catch (IOException e) {	
 			System.err.println("Error reading chatrooms file: " + e.getMessage());
@@ -87,18 +84,6 @@ public class User implements Serializable{
 		return chatrooms;
 		
 	}
-		
-	//should we create a file if the file is not found??
-	/*private void createFile(String filename) {		
-		try {			
-			File file = new File(filename);			
-			file.createNewFile();
-			
-		} catch (IOException e) {				
-			System.err.println("Error creating file " + filename + ": " + e.getMessage());			
-		}
-		
-	}*/
 	
 	
 	
