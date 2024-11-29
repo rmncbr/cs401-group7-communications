@@ -30,6 +30,8 @@ public class ServerTest {
 	
 	private ConcurrentHashMap<Integer, Chatroom> listOfChatrooms = new ConcurrentHashMap<Integer, Chatroom>();
 	
+	private int testUserId = 0;
+	
 	public ServerTest(int port) throws UnknownHostException {
 		this.port = port;
 		this.serverIP = InetAddress.getLocalHost().getHostAddress().trim();
@@ -250,7 +252,7 @@ public class ServerTest {
 				return -1;
 		    }
 		    
-		    User user = new User(split[0], split[1], true);
+		    User user = new User(split[0], split[1], true, testUserId++);
 		    
 		    System.out.println(user.getID() + ", " + user.getUsername());
 		    
