@@ -252,8 +252,77 @@ public class ConsoleUI {
 		}
 	}
 	
+	private void doDisplayChatroomOptions() {
+		System.out.println("[0] - DISPLAY CHATROOM USERS");
+		System.out.println("[1] - SEND MESSAGE");
+		System.out.println("[2] - QUIT");
+		System.out.print("Command: ");
+	}
+	
 	private void doJoinChatroom(Scanner input) {
+		doDisplayChatrooms();
+		System.out.println("Which chatroom would you like to join?");
+		int chatroomID = -1;
 		
+		System.out.print("Enter: ");
+		if(input.hasNextInt()) {
+			chatroomID = input.nextInt();
+			input.nextLine();
+			if(!chatrooms.containsKey(chatroomID)) {
+				System.out.println("You are not apart of chatroom: " + chatroomID + "!");
+				return;
+			}
+		}
+		else {
+			input.nextLine();
+			System.out.println("Invalid Input!");
+		}
+		
+		final int chatroom = chatroomID;
+		// Create thread to display chatroom
+		Thread displayChatrooms = new Thread(() -> doDisplayChatMessages(chatroom));
+		displayChatrooms.start();
+		
+		while(true) {
+			// Display the command options
+			doDisplayChatroomOptions();
+			
+			int command = -1;
+			Boolean quit = false;
+			if(input.hasNextInt()) {
+				command = input.nextInt();
+				input.nextLine();
+				switch (command) {
+					case 0:
+						// chatrooms.get(chatroomID).displayMembers();
+						break;
+					case 1:
+						System.out.print("Enter Message: ");
+						try {
+							client.sendMessageToChatroom(input.nextLine(), chatroomID);
+						} catch (IllegalStateException e) {
+						
+						e.printStackTrace();
+						} catch (IOException e) {
+						
+						e.printStackTrace();
+						}
+						break;
+					case 2:
+						quit = true;
+						break;
+					default:
+						System.out.println("Invalid Command!");
+						break;
+				}
+				if(quit) break;
+			}
+			else {
+				input.nextLine();
+				System.out.println("Invalid Input!");
+			}
+		}
+		displayChatrooms.interrupt();
 	}
 	
 	private void doLeaveChatroom(Scanner input) {
@@ -383,19 +452,31 @@ public class ConsoleUI {
 		
 	}
 	
-	private void processCreateChatroom(Message message) {
-		
+	private void processCreateChatroom(Message message) {	
+
 	}
 	
 	private void processJoinChatroom(Message message) {
 		// Here we would call a new thread of DisplayChatMessages until the user returns to Main Menu
 	}
 	
-	private void displayChatMessages() {
-		
-		while(true) {
-			doDisplayChatrooms();
-			// Some logic to wait until interrupted/ countdownlatch when new chatroom message comes in
+	private void doDisplayChatMessages(int chatroomID) {
+		try {
+			while(true) {
+				if(Thread.interrupted()) {
+					break;
+				}
+				displayUpdate = new CountDownLatch(1);
+				System.out.println("CHATROOM MESSAGES");
+				chatrooms.get(chatroomID).displayMessages();
+				System.out.println("---------------------------------------");
+				doDisplayChatroomOptions();
+				displayUpdate.await();
+			}
+		}
+		catch(InterruptedException e) {
+		    System.out.println("Display chat messages interrupted.");
+		    Thread.currentThread().interrupt();
 		}
 	}
 	
@@ -429,7 +510,10 @@ public class ConsoleUI {
 	}
 	
 	private void processChatroomMessage(Message message) {
-		
+		if(chatrooms.containsKey(message.getToChatroomID())) {
+			chatrooms.get(message.getToChatroomID()).addMessage(message);
+			displayUpdate.countDown();
+		}
 	}
 	
 	private void processUserMapUpdate(Message message) {
