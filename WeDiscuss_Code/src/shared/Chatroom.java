@@ -1,24 +1,23 @@
 package shared;
+import java.io.Serializable;
 import java.util.*;
 
-public class Chatroom extends Message {
+public class Chatroom implements Serializable {
 	private int id;
-	private List<Integer> members;
-	private List<Message> messages;
+	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());;
+	private List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
 	
-	public Chatroom(int id, int creatorID) {
-		super(new MessageCreator(MessageType.CC));
-		this.id = id;
-		this.members = new ArrayList<Integer>();
-		this.members.add(creatorID);
-		this.messages = new ArrayList<Message>();
+	public Chatroom(int chatroomID) {
+		this.id = chatroomID;
 	}
 	
-	
+	public Chatroom(int chatroomID, int creatorID) {
+		this.id = chatroomID;
+		this.members.add(creatorID);
+	}
 	
 	public int getChatroomID() {
 		return this.id;
-    
 	}
 	
 	public List<Message> getMessages() {
@@ -35,11 +34,11 @@ public class Chatroom extends Message {
 		}
 	}
 	
-	public void findMember(int userID) {
+	public Boolean findMember(int userID) {
 		if (this.members.contains(userID)) {
-            System.out.println("Member found!");
-        } else {
-            System.out.println("Member not found!");
+            return true;        } 
+		else {
+            return false;
         }
     }
 	

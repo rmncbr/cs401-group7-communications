@@ -5,6 +5,8 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import demo.ConsoleClient.listenForMessages;
+import demo.ConsoleClient.readMessages;
 import server.User;
 import shared.*;
 
@@ -58,6 +60,27 @@ public class Client {
 			}
 
 		}
+		
+	}
+	
+	private void reconnect() throws IOException{
+		// Close the old socket & Associated resources
+		if(serverSocket != null && !serverSocket.isClosed()) {
+			closeResources();
+		}
+		
+		connected = true;
+		serverSocket = new Socket(serverIP, serverPort);
+		toServer = new ObjectOutputStream(serverSocket.getOutputStream());
+		fromServer = new ObjectInputStream(serverSocket.getInputStream());
+		
+		System.out.println("Reconnected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
+		
+		
+		// Listener thread to listen for messages
+		new Thread(new listenForMessages()).start();
+		// Reader thread to read incoming messages
+		new Thread(new readMessages()).start();
 		
 	}
 	
@@ -253,33 +276,13 @@ public class Client {
 	
 	private void sendMessage(Message message) throws IOException {
 		try {
+			System.out.println(message.getContents() + ", " + message.getMessageType());
 			toServer.writeObject(message);
 		}
 		catch(IOException e) {
 			System.out.println("Failed sending message!");
 			throw e;
 		}
-	}
-	
-	private void reconnect() throws IOException{
-		// Close the old socket & Associated resources
-		if(serverSocket != null && !serverSocket.isClosed()) {
-			closeResources();
-		}
-		
-		connected = true;
-		serverSocket = new Socket(serverIP, serverPort);
-		toServer = new ObjectOutputStream(serverSocket.getOutputStream());
-		fromServer = new ObjectInputStream(serverSocket.getInputStream());
-		
-		System.out.println("Reconnected to: " + serverSocket.getInetAddress() + ", " + serverSocket.getPort());
-		
-		
-		// Listener thread to listen for messages
-		new Thread(new listenForMessages()).start();
-		// Reader thread to read incoming messages
-		new Thread(new readMessages()).start();
-		
 	}
 	
 	/* Once connected to the sever, a separate thread only listens for messages from server, adds them to a queue for readMessages to consume */
@@ -320,61 +323,66 @@ public class Client {
 				switch(type) {
 					case LOGIN:
 						// Login fail
-						if(!message.getContents().equals("Success")) {
-							throw new IllegalStateException("Bad Login Credentials");
-						}
-						// user = message.getUser();
 						clientGui.initUpdate(message);
+						if(message.getContents().equals("Success")) {
+							user = message.getUser();
+						}
 						break;
 					case LOGOUT:
-						if(message.getContents().equals("Error")) {
+						if(message.getContents().equals("Success")) {
 							connected = false;
 						}
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case ADDUSER:
 						// confirm message	
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case DELUSER:
 						// confirm message
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case CPWD:
 						// confirm message
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case GUL:
 						// message w/ log contents
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case GCL:
 						// message w/ log contents
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case CC:
 						// messge w/ chatroom id
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);;
 						break;
 					case IUC:
 						// message w/ chatroom
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case JC:
 						// message w/ chatroom
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case LC:
 						// confirm message
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case UTU:
 						// message w/ message contents & info
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
 						break;
 					case UTC:
 						// message w/ message contents add to chatroom
-						clientGui.update(message);
+						clientGui.addToMessageQueue(message);
+						break;
+					case UPDATEUM:
+						clientGui.addToMessageQueue(message);
+						break;
+					case UPDATECM:
+						clientGui.addToMessageQueue(message);
 						break;
 					default:
 						break;
@@ -386,7 +394,7 @@ public class Client {
 			while(!messageQueue.isEmpty()) {
 				Message message = messageQueue.poll();
 				if(message != null) {
-					clientGui.update(message);
+					clientGui.addToMessageQueue(message);
 				}
 			}
 			

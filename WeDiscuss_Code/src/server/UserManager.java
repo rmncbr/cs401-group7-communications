@@ -4,8 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -69,7 +67,7 @@ public class UserManager {
 				usernameToUserID.put(token.get(0), id);
 				
 				//create user and add it to list of all users
-				User makeuser = new User(token.get(0), token.get(1), token.get(2), id);
+				User makeuser = new User(token.get(0), token.get(1), Boolean.valueOf(token.get(2)), id);
 				allUsers.put(token.get(0), makeuser);
 				
 				
@@ -161,8 +159,6 @@ public class UserManager {
 		}
 		return -1;
 	}
-	
-	
 	
 	public void addUser(ObjectOutputStream out, Message message)
 	{
@@ -377,7 +373,7 @@ public class UserManager {
 		    	userIDToUsername.remove(removeID);
 		    	usernameToUserID.remove(removeName);
 		    	activeUsers.remove(removeName);
-		    	allUsernames.remove(removeName);
+		    	allUsernames.remove(removeName);	    	
 		    	allUsers.remove(removeName);
 		    	validUsers.remove(removeName);
 		    	
