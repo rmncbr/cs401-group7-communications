@@ -105,6 +105,7 @@ public class UserManager {
 		
 	}
 	
+	// IF SUCCESSFUL ADD TO EVERYONES USERMAP
 	public int authUser(ObjectOutputStream out, Message message)
 	{
 		
@@ -163,7 +164,7 @@ public class UserManager {
 	}
 	
 	
-	
+	// ADD TO EVERYONES USERMAP
 	public void addUser(ObjectOutputStream out, Message message)
 	{
 		try {
@@ -337,7 +338,7 @@ public class UserManager {
 		}
 	}
 	
-	public int deleteUser(ObjectOutputStream out, Message message)
+	public int deleteUser(ObjectOutputStream out, Message message, ChatroomManager chatroomManager, ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients)
 	{
 		try {
 			//message variable
@@ -378,6 +379,23 @@ public class UserManager {
 		    	usernameToUserID.remove(removeName);
 		    	activeUsers.remove(removeName);
 		    	allUsernames.remove(removeName);
+		    	
+		    	// Remove user from all chatrooms they are apart of
+		    	chatroomManager.removeUserFromChatrooms(allUsers.get(removeName).getChatrooms(), removeID, listOfClients);
+		    	
+		    	// Update everyone's Usermap
+				listOfClients.keySet().parallelStream().forEach(client ->{
+					try {
+						if(chatrooms.get(chatroomID).findMember(client) && client != userID) {
+							clients.get(client).writeObject(Send);
+							clients.get(client).flush();
+						}
+					}
+					catch(IOException e) {
+						System.err.println("Error sending update to a client!");
+					}
+				});
+		    	
 		    	allUsers.remove(removeName);
 		    	validUsers.remove(removeName);
 		    	
