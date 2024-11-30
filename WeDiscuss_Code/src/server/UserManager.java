@@ -103,7 +103,6 @@ public class UserManager {
 		
 	}
 	
-	// IF SUCCESSFUL ADD TO EVERYONES USERMAP
 	public int authUser(ObjectOutputStream out, Message message)
 	{
 		
