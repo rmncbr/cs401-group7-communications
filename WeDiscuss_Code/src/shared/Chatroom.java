@@ -43,11 +43,21 @@ public class Chatroom implements Serializable {
     }
 	
 	public void addMember(int userID) {
-		this.members.add(userID);
+		if (!this.members.contains(userID)) {
+			this.members.add(userID);
+		}
+		else {
+			System.out.println("User already exists in chatroom.");
+		}
 	}
 	
 	public void removeMember(int userID) {
-		this.members.remove(userID);
+		if (this.members.contains(userID)) {
+			this.members.remove(userID);
+		} else {
+			System.out.println("User does not exist in chatroom.");
+		}
+		
 	}
 }
 
