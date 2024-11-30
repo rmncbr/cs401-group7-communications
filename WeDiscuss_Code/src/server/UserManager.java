@@ -4,8 +4,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -69,7 +67,7 @@ public class UserManager {
 				usernameToUserID.put(token.get(0), id);
 				
 				//create user and add it to list of all users
-				User makeuser = new User(token.get(0), token.get(1), token.get(2), id);
+				User makeuser = new User(token.get(0), token.get(1), Boolean.valueOf(token.get(2)), id);
 				allUsers.put(token.get(0), makeuser);
 				
 				
@@ -163,8 +161,6 @@ public class UserManager {
 		return -1;
 	}
 	
-	
-	// ADD TO EVERYONES USERMAP
 	public void addUser(ObjectOutputStream out, Message message)
 	{
 		try {
@@ -338,7 +334,7 @@ public class UserManager {
 		}
 	}
 	
-	public int deleteUser(ObjectOutputStream out, Message message, ChatroomManager chatroomManager, ConcurrentHashMap<Integer, ObjectOutputStream> listOfClients)
+	public int deleteUser(ObjectOutputStream out, Message message)
 	{
 		try {
 			//message variable
@@ -378,24 +374,7 @@ public class UserManager {
 		    	userIDToUsername.remove(removeID);
 		    	usernameToUserID.remove(removeName);
 		    	activeUsers.remove(removeName);
-		    	allUsernames.remove(removeName);
-		    	
-		    	// Remove user from all chatrooms they are apart of
-		    	chatroomManager.removeUserFromChatrooms(allUsers.get(removeName).getChatrooms(), removeID, listOfClients);
-		    	
-		    	// Update everyone's Usermap
-				listOfClients.keySet().parallelStream().forEach(client ->{
-					try {
-						if(chatrooms.get(chatroomID).findMember(client) && client != userID) {
-							clients.get(client).writeObject(Send);
-							clients.get(client).flush();
-						}
-					}
-					catch(IOException e) {
-						System.err.println("Error sending update to a client!");
-					}
-				});
-		    	
+		    	allUsernames.remove(removeName);	    	
 		    	allUsers.remove(removeName);
 		    	validUsers.remove(removeName);
 		    	

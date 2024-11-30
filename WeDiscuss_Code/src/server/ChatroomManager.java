@@ -2,10 +2,7 @@ package server;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -115,11 +112,6 @@ public class ChatroomManager {
 					System.err.println("Error sending update to a client!");
 				}
 			});
-
-			
-			create.setContents("Success");
-			Send = new Message(create);// create an accept message
-		    out.writeObject(Send); //send message
 		}
 		catch(IOException e)
 		{
@@ -135,7 +127,7 @@ public class ChatroomManager {
 		return find;
 	}
 	
-	public void joinChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> clients) {
+	public int joinChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> clients) {
 		try {
 			Message Send;
 			MessageCreator create;
@@ -144,20 +136,23 @@ public class ChatroomManager {
 			Send = new Message(create);// have message ready to return a deny
 			
 			Integer id = message.getToChatroomID();
+			
 			if(id == null) {
 				out.writeObject(Send);
-				return;
+				return -1;
 			}
 			
 			Chatroom join = chatrooms.get(id);
+			
 			// If chatroom doesn't exist or if already apart of the chatroom
 			if(join == null || join.findMember(message.getFromUserID())) {
 				out.writeObject(Send);
-				return;
+				return -1;
 			}
 			
 			create.setContents("Add");
 			create.setFromUserID(message.getFromUserID());
+			create.setToChatroom(join.getChatroomID());
 			
 			// Let others know client is joining the chatroom
 			clients.keySet().parallelStream().forEach(client ->{
@@ -179,14 +174,16 @@ public class ChatroomManager {
 			create.setToChatroom(join.getChatroomID());
 			out.writeObject(create.createMessage());
 			
+			return message.getFromUserID();
 		}
 		catch(IOException e) {
 			e.printStackTrace();
+			return -1;
 		}
 	}
 	
 	//inorder to get userToInvite, have the server get that value with the user manager function
-	public void addUsertoChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> clients)
+	public int addUsertoChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> clients)
 	{
 		try
 		{
@@ -203,7 +200,7 @@ public class ChatroomManager {
 			{
 				//don't send a message
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 			}
 			
 			
@@ -211,16 +208,17 @@ public class ChatroomManager {
 			if(receive == null)
 			{
 				out.writeObject(Send); //send the deny message
-				return;
+				return -1;
 			}
 			
 			create.setContents("Add");
 			create.setFromUserID(message.getToUserID());
+			create.setToChatroom(receive.getChatroomID());
 			
 			// Let others know client is joining the chatroom
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
-					if(receive.findMember(client)) {
+					if(receive.findMember(client) && client != message.getToUserID()) {
 						clients.get(client).writeObject(create.createMessage());
 						clients.get(client).flush();
 					}
@@ -232,16 +230,24 @@ public class ChatroomManager {
 			
 			receive.addMember(message.getToUserID()); //give user ID to chatroom so they can store it
 			
-			create.setChatroom(receive);
+			// Confirm that invite sent
 			create.setContents("Success");
 			Send = new Message(create);// create an accept message
 		    out.writeObject(Send); //send message
 			
+		    // Send chatroom info to invited user
+		    create.setContents("Add");
+		    create.setChatroom(receive);
+		    Send = new Message(create);
+		    clients.get(message.getToUserID()).writeObject(Send);
+		    
+		    return message.getToUserID();
 			
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
+			return -1;
 		}
 	}
 	
@@ -367,6 +373,7 @@ public class ChatroomManager {
 			
 			create.setContents("Remove");
 			create.setToUserID(message.getToUserID());
+			create.setToChatroom(receive.getChatroomID());
 			
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
@@ -391,19 +398,20 @@ public class ChatroomManager {
 		
 	}
 	
-	public void removeUserFromChatrooms(List<Integer>chatroomIds, Integer userID, ConcurrentHashMap<Integer, ObjectOutputStream> clients) {
+	public void removeUserFromChatrooms(User user, ConcurrentHashMap<Integer, ObjectOutputStream> clients) {
 		Message Send;
 		MessageCreator create;
 		create = new MessageCreator(MessageType.LC);
-		create.setToUserID(userID);
+		create.setToUserID(user.getID());
 		Send = new Message(create);// have message ready to return a deny
 		
-		for(Integer chatroomID : chatroomIDs) {
+		
+		for(Integer chatroomID : user.getChatrooms()) {
 			// Remove from data, send to all online clients that user is not apart of chatroom anymore
-			chatrooms.get(chatroomID).removeMember(userID);
+			chatrooms.get(chatroomID).removeMember(user.getID());
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
-					if(chatrooms.get(chatroomID).findMember(client) && client != userID) {
+					if(chatrooms.get(chatroomID).findMember(client) && client != user.getID()) {
 						clients.get(client).writeObject(Send);
 						clients.get(client).flush();
 					}
