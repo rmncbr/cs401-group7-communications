@@ -1,4 +1,4 @@
-package client;
+package demo;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,7 +19,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class ClientUI extends JFrame {
-	protected Client client;
+	protected ConsoleClient client;
 	private boolean isLoggedIn = false;
 	private volatile boolean operationCheck = false;
 	private User user;
@@ -63,7 +63,7 @@ public class ClientUI extends JFrame {
 	private Map<Integer, JTextArea> chatroomMessageAreas = new HashMap<>();
 
 	public ClientUI() {
-		client = new Client(this); // Init Client w/ this GUI
+		client = new ConsoleClient(this); // Init Client w/ this GUI
 
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setSize(575, 400);
