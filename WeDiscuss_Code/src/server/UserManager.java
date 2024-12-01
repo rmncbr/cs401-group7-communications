@@ -90,6 +90,15 @@ public class UserManager {
 		
 	}
 	
+	public User getUser(int userID)
+	{
+		String grab = getUsername(userID);
+		User find = allUsers.get(grab);
+		
+		return find;
+		
+	}
+	
 	public int getUserID(String username)
 	{
 		Integer find;
@@ -471,7 +480,16 @@ public class UserManager {
 		return false;
 		
 	}
-	//private void checkValid(input)
+	
+	public void addChatroomToUser(int userID, int chatroomID)
+	{
+		String grab = getUsername(userID);
+		User find = allUsers.get(grab); //find the correct user
+		
+		
+		find.addChatroom(chatroomID); //add the chatroom ID to the user
+		
+	}
 	
 	
 }
