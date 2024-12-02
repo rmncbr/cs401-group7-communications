@@ -25,12 +25,36 @@ public class User implements Serializable{
 		this.username = username;
 		this.password = password;
 		this.adminStatus = adminStatus;
-		this.ID = userID;
+		this.ID = validateUID(userID);
 		this.status = false; //Initially offline
 		this.messageInbox = loadMessageInbox();
 		this.involvedChatrooms = loadChatrooms();
 	}
-	
+
+	//Method to validate userID
+	private int validateUID(Integer userID) {
+
+		if (userID == null) {
+			throw new IllegalArgumentException("User ID cannot be null");
+		}
+
+		if (userID < 0) {
+			throw new IllegalArgumentException("User ID cannot be negative");
+		}
+
+		//update IDCounter if incoming ID is higher
+		if (userID >= IDCounter) {
+			IDCounter = userID + 1;
+		}
+
+		return userID;
+	}
+
+	//get the next available user ID
+	//return current highest IDCounter
+	public static int getNextAvailableID() {
+		return IDCounter;
+	}
 		
 		
 	//Load messages from inbox file
