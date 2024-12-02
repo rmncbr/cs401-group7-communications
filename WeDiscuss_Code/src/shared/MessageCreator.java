@@ -6,6 +6,7 @@ import server.*;
 
 public class MessageCreator {
 	private String contents;
+	private Date date;
 	private String toUserName;
 	private int toUserID;
 	private String fromUserName;
@@ -19,6 +20,7 @@ public class MessageCreator {
 	
 	public MessageCreator(MessageType messageType) {
 		this.messageType = messageType;
+		this.date = new Date();
 		this.contents = null;
 		this.toUserName = null;
 		this.toUserID = -1;
@@ -33,6 +35,10 @@ public class MessageCreator {
 	
 	public void setContents(String contents) {
 		this.contents = contents;
+	}
+	
+	public void setDate(Long time) {
+		this.date = new Date(time);
 	}
 	
 	public void setToUserName(String toUserName) {
@@ -73,6 +79,10 @@ public class MessageCreator {
 	
 	public String getContents() {
 		return this.contents;
+	}
+	
+	public Date getDate() {
+		return this.date;
 	}
 	
 	public String getToUserName() {
