@@ -104,25 +104,105 @@ public class Message implements Serializable{
 		String result ="";
 		if (this.messageType == MessageType.UTU)
 		{
-			result = "FROM " + this.fromUserName + ": " + this.contents;
+			result = "FROM: " + this.fromUserName + "/ " + this.contents;
 		}
 		
 		else if(this.messageType == MessageType.UTC)
 		{
-			result = "FROM: " + this.fromUserName + ": " + this.contents;
+			result = "FROM: " + this.fromUserName + "/ " + this.contents;
 		}
 		
 		else if(this.messageType == MessageType.GUL)
 		{
-			result = "FROM: " + this.fromUserName + ": " + this.contents + "  /TO "+ this.toUserName;
+			result = "FROM: " + this.fromUserName + "/ " + this.contents + "  /TO "+ this.toUserName;
 		}
 		
 		else if(this.messageType == MessageType.GCL)
 		{
-			result = "FROM: " + this.fromUserName + ": " + this.contents + "  /TO Chatroom ID:"+ this.toChatroomID;
+			result = "FROM: " + this.fromUserName + "/ " + this.contents + "  /TO Chatroom ID:"+ this.toChatroomID;
 		}
 		return result;
 	}
 	
+	public String storeChatroomMessage()
+	{
+		String result = "";
+		result += this.contents + "|";
+		result += this.dateSent.getTime() + "|";
+		result += Integer.toString(this.toChatroomID) + "|";
+		result += this.fromUserName + "|";
+		result += Integer.toString(this.fromUserID) + "|";
+		
+		String type = typeToString(this.messageType);
+		
+		result += type;
+		
+		return result;
+	}
+	
+	public String storeInboxMessage()
+	{
+		String result = "";
+		result += this.contents + "|";
+		result += this.dateSent.getTime() + "|";
+		result += this.toUserName + "|";
+		result += Integer.toString(this.toUserID) + "|";
+		result += this.fromUserName + "|";
+		result += Integer.toString(this.fromUserID) + "|";
+		
+		String type = typeToString(this.messageType);
+		
+		result += type;
+		
+		return result;
+	}
+	
+	public String typeToString(MessageType type)
+	{
+		switch(type) {
+		
+			case LOGIN:
+				return "LOGIN";
+				
+			case LOGOUT:
+				return "LOGOUT";
+	
+			case ADDUSER:
+				return "ADDUSER";
+				
+			case DELUSER:
+				return "DELUSER";
+				
+			case CPWD:
+				return "CPWD";
+				
+			case GUL:
+				return "GUL";
+	
+			case GCL:
+				return "GCL";
+				
+			case CC:
+				return "CC";
+	
+			case IUC:
+				return "IUC";
+				
+			case JC:
+				return "JC";
+				
+			case LC:
+				return "LC";
+				
+			case UTU:
+				return "UTU";
+				
+			case UTC:
+				return "UTC";
+				
+			default:
+				return "ERROR";
+		}
+	}
 	
 }
