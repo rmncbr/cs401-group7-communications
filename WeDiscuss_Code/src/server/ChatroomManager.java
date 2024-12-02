@@ -11,15 +11,16 @@ import shared.*;
 
 public class ChatroomManager {
 	
-	private ConcurrentHashMap<Integer, Chatroom> chatrooms = new ConcurrentHashMap<Integer, Chatroom>();
+	protected ConcurrentHashMap<Integer, Chatroom> chatrooms = new ConcurrentHashMap<Integer, Chatroom>();
 	private List<Integer> chatroomIDs = Collections.synchronizedList(new ArrayList<Integer>());
 	
-	private String chatroomFile = "ChatroomFile";
+	private String chatroomFile = "ChatroomFile.txt";
 	
 	private static int chatroomCounter = 0;
-	
-	public ChatroomManager()
+	private Server server;
+	public ChatroomManager(Server server)
 	{
+		this.server = server;
 		try //this will populate the valid user accounts
 		{
 			File myFile = new File(chatroomFile);
@@ -251,45 +252,41 @@ public class ChatroomManager {
 		}
 	}
 	
-	public void createChatroom(ObjectOutputStream out, Message message)
-	{
-		try
-		{
-			//message variable
-			Message Send;
-			MessageCreator create;
-			create = new MessageCreator(MessageType.CC);
-			create.setContents("Error"); 
-			Send = new Message(create);// have message ready to return a deny
-			
-			Integer id = message.getToChatroomID(); // get chatroom id
-			
-			if (id == null) //check if input is good
-			{
-				//don't send a message
-				out.writeObject(Send); //send the deny message
-				return;
-			}
-			
-			//make a new chatroom and add it to list 
-			Chatroom make = new Chatroom(++chatroomCounter, message.getFromUserID());
-			Integer ChatId = make.getChatroomID();
-			chatroomIDs.add(ChatId);
-			chatrooms.put(ChatId, make);
-			
-			create.setContents("Success");
-			create.setToChatroom(make.getChatroomID()); //add the chatroom ID in the return message
-			create.setChatroom(make); //add the chatroom in return message
-			Send = new Message(create);// create an accept message
-		    out.writeObject(Send); //send message
-			
-			
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-	}
+    public void createChatroom(ObjectOutputStream out, Message message) {
+        try {
+            // Message variable
+            Message Send;
+            MessageCreator create;
+            create = new MessageCreator(MessageType.CC);
+            create.setContents("Error");
+            Send = new Message(create); // prepare error message
+            
+            Integer id = message.getToChatroomID(); // get chatroom ID
+            
+            if (id == null) { // check if input is valid
+                out.writeObject(Send); // send deny message
+                return;
+            }
+
+            // Make a new chatroom and add it to the list
+            Chatroom make = new Chatroom(++chatroomCounter, message.getFromUserID());
+            Integer chatId = make.getChatroomID();
+            chatroomIDs.add(chatId);
+            chatrooms.put(chatId, make);
+
+            create.setContents("Success");
+            create.setToChatroom(make.getChatroomID()); // set the chatroom ID
+            create.setChatroom(make); // set the chatroom object
+            Send = new Message(create); // create success message
+            out.writeObject(Send); // send success message
+
+            // Now call sendChatroomUpdates to notify Server of the new chatroom
+            server.sendChatroomUpdates(chatId, true); // true means we're adding the chatroom
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 	
 	public void deleteChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer,ObjectOutputStream> clients)
 	{

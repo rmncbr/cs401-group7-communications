@@ -26,7 +26,7 @@ public class Server {
 		this.running = false;
 		this.userManager = new UserManager();
 		this.logManager = new LogManager();
-		this.chatroomManager = new ChatroomManager();
+		this.chatroomManager = new ChatroomManager(this);
 		this.listOfClients = new ConcurrentHashMap<>();
 		this.clientThreads = new ConcurrentHashMap<>();
 		this.executorService = Executors.newFixedThreadPool(MAX_THREADS);
@@ -35,6 +35,8 @@ public class Server {
 	public static void main(String[] args) throws UnknownHostException {
 		Server server = new Server(8080); //temp port for testing
 		server.start();
+		
+		
 	}
 	
 	public void start() {
@@ -128,7 +130,7 @@ public class Server {
 				
 				switch(type) {
 					case LOGIN:
-							userID = userManager.authUser(output, message);
+							userID = userManager.authUser(output, message, chatroomManager);
 							if(userID != -1) {
 								 listOfClients.put(userID, output);
 								 clientThreads.put(userID, Thread.currentThread());
@@ -182,7 +184,8 @@ public class Server {
 					case JC:
 							int joinedUserID = chatroomManager.joinChatroom(output, message, listOfClients);
 							if(joinedUserID != -1) {
-								userManager.addChatroomToUser(invitedUserID, message.getToChatroomID()); // Add chatroomID to User Object's list of chatrooms
+								userManager.addChatroomToUser(joinedUserID, message.getToChatroomID()); // Add chatroomID to User Object's list of chatrooms
+								
 							}
 						break;
 					case LC:
@@ -249,6 +252,47 @@ public class Server {
 		}
 		
 	}
+	
+	protected void sendChatroomUpdates(Integer chatroomID, Boolean addChatroom) {
+	    MessageCreator messageCreator = new MessageCreator(MessageType.UPDATECM);
+	    messageCreator.setFromUserID(chatroomID);  // Use chatroom ID
+
+	    if (addChatroom) {
+	        messageCreator.setContents("Add");
+
+	        // Retrieve the chatroom using the ChatroomManager
+	        Chatroom chatroom = chatroomManager.getChatroom(chatroomID);
+	        if (chatroom != null) {
+	            messageCreator.setChatroom(chatroom);  // Set chatroom details
+	            messageCreator.setToChatroom(chatroomID);
+
+	            // Notify all clients about the chatroom addition
+	            listOfClients.values().parallelStream().forEach(output -> {
+	                try {
+	                    output.writeObject(messageCreator.createMessage());
+	                    output.flush();
+	                } catch (IOException e) {
+	                    System.err.println("Error sending chatroom update to a client!");
+	                }
+	            });
+	        }
+	    } else {
+	        // Remove the chatroom from list
+	        chatroomManager.deleteChatroom(null, new Message(new MessageCreator(MessageType.UPDATECM)), listOfClients);
+	        messageCreator.setContents("Remove");
+
+	        // Notify all clients about the chatroom removal
+	        listOfClients.values().parallelStream().forEach(output -> {
+	            try {
+	                output.writeObject(messageCreator.createMessage());
+	                output.flush();
+	            } catch (IOException e) {
+	                System.err.println("Error sending chatroom removal update to a client!");
+	            }
+	        });
+	    }
+	}
+
 	
 	public void closeResources(Socket clientSocket, ObjectInputStream input, ObjectOutputStream output, Integer userID) {
 		try {

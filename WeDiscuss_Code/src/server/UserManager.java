@@ -11,7 +11,7 @@ import shared.*;
 
 public class UserManager {
 	// all maps 
-	private ConcurrentHashMap<String, String> validUsers = new ConcurrentHashMap<String, String>(); // map of all valid username/pw combos
+	protected ConcurrentHashMap<String, String> validUsers = new ConcurrentHashMap<String, String>(); // map of all valid username/pw combos
 
 	private ConcurrentHashMap<String, String> adminStatus = new ConcurrentHashMap<String, String>(); // map of admin status
 	private ConcurrentHashMap<Integer, String> userIDToUsername = new ConcurrentHashMap<Integer, String>(); // id to username
@@ -112,62 +112,70 @@ public class UserManager {
 		
 	}
 	
-	public int authUser(ObjectOutputStream out, Message message)
-	{
-		
-		try {
-			//message variable
-			Message Send;
-			MessageCreator create;
-			create = new MessageCreator(MessageType.LOGIN);
-			create.setContents("Error"); 
-			Send = new Message(create);// have message ready to return a deny
-			
-			String input = message.getContents();
-			
-			//check for bad input
-			if (input == null)
-			{
-				out.writeObject(Send); //send the deny message
-				return -1;
-			}
-			
-		    //split the given string by using space as delimiter
-		    String[] split = input.split("\\s+");
-		    //check for bad input
-		    if (split.length != 2)
-		    {
-				out.writeObject(Send); //send the deny message
-				return -1;
-		    }
-		    
-		    // check if username exits and is not signed in already
-		    if (validUsers.containsKey(split[0]) && activeUsers.contains(split[0]))//short circuits 
-		    {
-		    	String grab = validUsers.get(split[0]);
-		    	if(grab != null && grab.equals(split[1]))//check if Password exitsts and is valid
-		    	{
-					create.setContents("Success");
-					create.setUser(allUsers.get(split[0])); // send back User object
-					Send = new Message(create);// create an accept message
-					out.writeObject(Send); //send the message
-					activeUsers.add(split[0]); // add to list of active users
-					return getUserID(split[0]);
-		    	} 
-				out.writeObject(Send); //send deny if credentials dont work
-				return -1;
-		    	
-		    }
-		    out.writeObject(Send); //send deny if credentials dont work
-		    return -1;
-		    
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
-		return -1;
+	public int authUser(ObjectOutputStream out, Message message, ChatroomManager chatroomManager) {
+	    try {
+	        // message variable
+	        Message Send;
+	        MessageCreator create = new MessageCreator(MessageType.LOGIN);
+	        create.setContents("Error");
+	        Send = new Message(create);  
+
+	        String input = message.getContents();
+	        System.out.println("Received login request: " + input); 
+
+	        // Check for bad input
+	        if (input == null) {
+	            create.setContents("Error: Invalid input.");
+	            out.writeObject(Send);
+	            return -1;
+	        }
+
+	        String[] split = input.split("\\s+");
+	        if (split.length != 2) {
+	            create.setContents("Error: Invalid number of arguments.");
+	            out.writeObject(Send);
+	            return -1;
+	        }
+
+	        // Check if username exists and is not logged in already
+	        if (!validUsers.containsKey(split[0])) {
+	            create.setContents("Error: User does not exist.");
+	            out.writeObject(Send);
+	            return -1;
+	        }
+
+	        if (activeUsers.contains(split[0])) {
+	            create.setContents("Error: User already logged in.");
+	            out.writeObject(Send);
+	            return -1;
+	        }
+
+	        String storedPassword = validUsers.get(split[0]).trim();
+	        String clientPassword = split[1].trim();
+
+	        if (storedPassword.equals(clientPassword)) {	            
+	            create.setContents("Success");
+	            create.setUser(allUsers.get(split[0]));
+	            
+	            create.setUserMap(userIDToUsername);
+	            create.setChatroomMap(chatroomManager.chatrooms);
+	            
+	            Send = new Message(create);
+	            out.writeObject(Send);  
+	            activeUsers.add(split[0]);  
+	            return getUserID(split[0]); 
+	        }
+
+	        create.setContents("Error: Incorrect password.");
+	        out.writeObject(Send);
+	        return -1;
+
+	    } catch (IOException e) {
+	        e.printStackTrace();
+	    }
+	    return -1;
 	}
+
 	
 	public void addUser(ObjectOutputStream out, Message message)
 	{
