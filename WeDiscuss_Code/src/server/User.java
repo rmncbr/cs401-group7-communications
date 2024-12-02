@@ -48,6 +48,25 @@ public class User implements Serializable{
 		this.status = false; //Initially offline
 		loadMessageInbox();
 		loadChatrooms();
+		
+		System.out.println("FOR: " + username + "\n");
+		System.out.println("----------------");
+		
+		for (Map.Entry<Integer,List<Message>> mapElement : messagesFromUsers.entrySet()) {
+            int key = mapElement.getKey();
+ 
+            // Adding some bonus marks to all the students
+            List<Message> value = (mapElement.getValue());
+ 
+            System.out.println(key);
+            System.out.println("\n");
+            for (int i=0; i< value.size(); i++)
+            {
+            	System.out.println(value.get(i));
+            }
+        }
+		
+		
 	}
 	
 	//Constructor when making new account
@@ -98,6 +117,7 @@ public class User implements Serializable{
 	//Load messages from inbox file
 	public void loadMessageInbox() {
 		
+		//make sure the file exists first
 		String messageFiles = Integer.toString(ID) + "Inbox.txt";
 		try {
             File file = new File(messageFiles);
@@ -111,6 +131,8 @@ public class User implements Serializable{
             e.printStackTrace();
         }
 		
+		
+		//then load the data
 		try 
 		{
 			String messageFile = Integer.toString(ID) + "Inbox.txt";
@@ -122,7 +144,7 @@ public class User implements Serializable{
 			while (reader.hasNextLine())
 			{
 				//getline and set delimiters
-				Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \\s+ means whitespace
+				Scanner line = new Scanner(reader.nextLine()).useDelimiter("\\|"); // \\s+ means whitespace
 				
 				ArrayList<String> token = new ArrayList<String>();
 				line.tokens();
@@ -136,6 +158,7 @@ public class User implements Serializable{
 				//if there are more or less than 7 tokens, then it is invalid
 				if (token.size() != 7)
 				{
+					System.out.println("its skipping!!");
 					line.close(); //do nothing and skip this iteration
             		continue;
 				}
@@ -155,17 +178,34 @@ public class User implements Serializable{
 				create.setFromUserName(token.get(4)); //add from username
 				create.setFromUserID(Integer.parseInt(token.get(5))); //add from user id
 				
+				
 				add = new Message(create);
 				
 				messageInbox.add(add);
 				
-				if (!messagesFromUsers.containsKey(Integer.parseInt(token.get(5))))
+				int toUserID = Integer.parseInt(token.get(3));
+				int fromUserID = Integer.parseInt(token.get(5));
+				
+				
+				//check if the message is one thats sent or received, then add it to the hashmap
+				if(fromUserID == ID)
 				{
-					messagesFromUsers.put(Integer.parseInt(token.get(5)), new ArrayList<Message>());
+					//first check if it exists in the map
+					if (!messagesFromUsers.containsKey(toUserID))
+					{
+						messagesFromUsers.put(toUserID, new ArrayList<Message>());
+					}
+					messagesFromUsers.get(toUserID).add(add);
 				}
-				
-				messagesFromUsers.get(Integer.parseInt(token.get(5))).add(add);
-				
+				else
+				{
+					//first check if it exists in the map
+					if (!messagesFromUsers.containsKey(Integer.parseInt(token.get(5))))
+					{
+						messagesFromUsers.put(fromUserID, new ArrayList<Message>());
+					}
+					messagesFromUsers.get(fromUserID).add(add);
+				}
 				
 				line.close();
 			}

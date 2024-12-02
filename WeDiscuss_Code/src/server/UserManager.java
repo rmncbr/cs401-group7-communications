@@ -328,15 +328,14 @@ public class UserManager {
 					
 				}
 				
-				//then add the message to the User's inbox file
-				String messageFile = message.getToUserID()+ "Inbox.txt" ;
-				File sendFile = new File(messageFile);
-				FileWriter type = new FileWriter(sendFile, true); //opens file in append mode
+				//then add the message to the receiving User's inbox file
+				User receivingUser = allUsers.get(message.getToUserName());
+				receivingUser.addToInbox(message);
 				
-				String toSend = message.storeInboxMessage();
-				type.write(toSend);
-				type.write("\n");
-				type.close();
+				
+				//additionally, add the message to the sending user's inbox file
+				User sendingUser = allUsers.get(message.getFromUserName());
+				sendingUser.addToInbox(message);
 				
 				create.setContents("Success");
 				Send = new Message(create);// create an accept message 
