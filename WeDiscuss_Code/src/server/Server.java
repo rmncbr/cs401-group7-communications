@@ -39,23 +39,49 @@ public class Server {
 	
 	public void start() {
 		running = true;
+		
+		// shutdown hook so stop() is called if server terminates unexpectedly or System.exit(0) is reached
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> stop()));
+		
 		// Starts thread that listens for incoming client connections
 		Thread listenThread = new Thread(() -> listenForConnections());
 		listenThread.start();
+		
+		try(Scanner scanner = new Scanner(System.in)){
+			while(running) {
+				System.out.println("Enter 'end' to shutdown the server: ");
+				if(scanner.hasNextLine()) {
+					String input = scanner.nextLine();
+					if(input.equalsIgnoreCase("end")) {
+						System.out.println("Shutting down server...");
+						running = false;
+						listenThread.interrupt();
+					}
+				}
+			}
+		}
+		
+		System.exit(0);
 	}
 	
-	public void stop() {
-		running = false;
-		
+	public void stop() {		
 		try {
-			if (serverSocket != null && !serverSocket.isClosed()) {
-				serverSocket.close();
+			if (serverSocket != null) {
+				if(!serverSocket.isClosed()) {
+					serverSocket.close();
+				}
 				userManager.saveUsers();
-				while(!logManager.isLogQueueEmpty());
+				chatroomManager.saveUsers();
+				while(!logManager.isLogQueueEmpty()) {
+					System.out.println("Processing Log Message");
+				}
 				System.out.println("Server stopped.");
 			}
 		} catch (IOException e) {
 			System.out.println("Error closing server: " + e.getMessage());
+		}
+		finally {
+			executorService.shutdown();
 		}
 	}
 	
@@ -88,17 +114,14 @@ public class Server {
 		try {
 			serverSocket = new ServerSocket(port);
 			System.out.println("Server started on IPV4 Address: " +  serverIP + " Port: " + port);
-			while (true) {
+			while (!Thread.currentThread().isInterrupted()) {
 				Socket clientSocket = serverSocket.accept();
 				System.out.println("New Connection! From: " + clientSocket.getLocalSocketAddress());
 				Thread processThread = new Thread(() -> processResponse(clientSocket));
 				executorService.submit(processThread);
 			}
 		} catch (IOException e) {
-			System.err.println("Server connection error: " + e.getMessage());
-		}
-		finally {
-			stop();
+			System.err.println(e.getMessage());
 		}
 	}
 	
@@ -203,15 +226,16 @@ public class Server {
 						break;
 				}	
 			}
-			
-			System.out.println("All messages processed, ending server");
-			stop();
 		}
 		catch(IOException | ClassNotFoundException e) {
 			System.err.println("Error processing Client Message: " + e.getMessage());
 		}
 		finally {
 			clientThreads.remove(userID);
+			MessageCreator create = new MessageCreator(MessageType.LOGOUT);
+			create.setFromUserID(userID);
+			create.setFromUserName(userManager.getUsername(userID));
+			userManager.logout(create.createMessage());
 			closeResources(clientSocket, input, output, userID);
 		}
 		
