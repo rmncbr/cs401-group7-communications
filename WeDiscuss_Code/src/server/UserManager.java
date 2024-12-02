@@ -495,6 +495,11 @@ public class UserManager {
 		
 	}
 	
+	public void logout(Message message) {
+		String username = message.getFromUserName();
+		activeUsers.remove(username);
+	}
+	
 	public void addChatroomToUser(int userID, int chatroomID)
 	{
 		String grab = getUsername(userID);

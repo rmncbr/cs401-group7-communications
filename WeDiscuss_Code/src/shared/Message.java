@@ -162,6 +162,34 @@ public class Message implements Serializable{
 		return result;
 	}
 	
+	public String storeUserLogMessage() {
+		String result = "";
+		result += Integer.toString(this.fromUserID) + "|";
+		result += this.contents + "|";
+		result += this.dateSent.getTime() + "|";
+		
+		String type = typeToString(this.messageType);
+		
+		result += type;
+		
+		return result;
+	}
+	
+	public String storeChatLogMessage() {
+		String result = "";
+		result += Integer.toString(this.fromUserID) + "|";
+		result += this.contents + "|";
+		result += this.dateSent.getTime() + "|";
+		
+		String type = typeToString(this.messageType);
+		
+		result += type;
+		
+		result += "|" + Integer.toString(this.toChatroomID);
+		
+		return result;
+	}
+	
 	public String typeToString(MessageType type)
 	{
 		switch(type) {
