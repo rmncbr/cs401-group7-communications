@@ -70,7 +70,7 @@ public class UserManager {
 				//create user and add it to list of all users
 				User makeuser = new User(token.get(0), token.get(1), Boolean.valueOf(token.get(2)), id);
 				allUsers.put(token.get(0), makeuser);
-				allUserIDs.add(Integer.parseInt(token.get(1)));
+				allUserIDs.add(id);
 				
 				line.close();
 			}
@@ -329,12 +329,13 @@ public class UserManager {
 				}
 				
 				//then add the message to the User's inbox file
-				String messageFile = message.getToUserName() + message.getToUserID()+ "Inbox" + ".txt";
+				String messageFile = message.getToUserID()+ "Inbox.txt" ;
 				File sendFile = new File(messageFile);
 				FileWriter type = new FileWriter(sendFile, true); //opens file in append mode
 				
-				type.write(message.getContents() +  "\n" + message.getFromUserName());
-				type.write("\r\n");
+				String toSend = message.storeInboxMessage();
+				type.write(toSend);
+				type.write("\n");
 				type.close();
 				
 				create.setContents("Success");

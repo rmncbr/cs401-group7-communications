@@ -7,6 +7,11 @@ import java.util.concurrent.ConcurrentMap;
 import server.*;
 
 public class Message implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private String contents;
 	private Date dateSent;
 	private String toUserName;

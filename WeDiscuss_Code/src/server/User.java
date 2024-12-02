@@ -1,5 +1,6 @@
 package server;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.io.*;
 
 
@@ -10,6 +11,9 @@ import shared.MessageType;
 
 public class User implements Serializable{
 	//static counter to generate unique IDs
+	
+	private static final long serialVersionUID = 1L;
+	
 	private static int IDCounter = 0;
 	
 	private String username;
@@ -17,8 +21,12 @@ public class User implements Serializable{
 	private int ID;
 	private boolean status; //False = offline, True = online
 	private boolean adminStatus; //False = non-admin, True = admin
-	private List<Message> messageInbox = Collections.synchronizedList(new ArrayList<Message>());;
-	private List<Integer> involvedChatrooms = Collections.synchronizedList(new ArrayList<Integer>());;
+	private List<Message> messageInbox = Collections.synchronizedList(new ArrayList<Message>());
+	private List<Integer> involvedChatrooms = Collections.synchronizedList(new ArrayList<Integer>());
+	
+	
+	private ConcurrentHashMap<Integer, List<Message>> messagesFromUsers = new ConcurrentHashMap<Integer, List<Message>>();
+	
 	
 
 	
@@ -34,6 +42,9 @@ public class User implements Serializable{
 		{
 			IDCounter = userID;
 		}
+		
+		System.out.println(username+ " "+ password + " " + adminStatus + " " + userID);
+		
 		this.status = false; //Initially offline
 		loadMessageInbox();
 		loadChatrooms();
@@ -58,7 +69,7 @@ public class User implements Serializable{
 	            if (file.createNewFile()) {
 	                
 	            } else {
-	                System.out.println("File already exists.");
+	                System.out.println("File already exists. USER ERROR");
 	            }
 	        } catch (IOException e) {
 	            e.printStackTrace();
@@ -72,18 +83,33 @@ public class User implements Serializable{
 	            if (file.createNewFile()) {
 	                
 	            } else {
-	                System.out.println("File already exists.");
+	                System.out.println("File already exists. USER ERROR");
 	            }
 	        } catch (IOException e) {
 	            e.printStackTrace();
 	        }
 			
 		}
+		
+		
 	
 		
 		
 	//Load messages from inbox file
 	public void loadMessageInbox() {
+		
+		String messageFiles = Integer.toString(ID) + "Inbox.txt";
+		try {
+            File file = new File(messageFiles);
+
+            if (file.createNewFile()) {
+                
+            } else {
+            	
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		
 		try 
 		{
@@ -114,6 +140,8 @@ public class User implements Serializable{
             		continue;
 				}
 				
+				
+				
 				//add all message to the arraylist
 				Message add;
 				MessageCreator create;
@@ -131,6 +159,14 @@ public class User implements Serializable{
 				
 				messageInbox.add(add);
 				
+				if (!messagesFromUsers.containsKey(Integer.parseInt(token.get(5))))
+				{
+					messagesFromUsers.put(Integer.parseInt(token.get(5)), new ArrayList<Message>());
+				}
+				
+				messagesFromUsers.get(Integer.parseInt(token.get(5))).add(add);
+				
+				
 				line.close();
 			}
 			reader.close();
@@ -144,6 +180,20 @@ public class User implements Serializable{
 
 	//Load chatrooms IDs from the chatrooms file
 	public void loadChatrooms() {
+		
+		String chatsFiles = Integer.toString(ID) + "Chats.txt";
+		
+		try {
+            File file = new File(chatsFiles);
+
+            if (file.createNewFile()) {
+                
+            } else {
+                
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 		
 		try 
 		{

@@ -6,6 +6,9 @@ import java.io.Serializable;
 import java.util.*;
 
 public class Chatroom implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+	
 	private static int IDCounter =0;
 	private int id;
 	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());
@@ -25,7 +28,7 @@ public class Chatroom implements Serializable {
             if (file.createNewFile()) {
                 
             } else {
-                System.out.println("File already exists.");
+                System.out.println("File already exists. CHATROOM ");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -39,7 +42,7 @@ public class Chatroom implements Serializable {
             if (file.createNewFile()) {
                 
             } else {
-                System.out.println("File already exists.");
+                System.out.println("File already exists. CHATROOM ERROR");
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -54,6 +57,37 @@ public class Chatroom implements Serializable {
 		{
 			IDCounter = chatroomID;
 		}
+		
+		System.out.println(chatroomID);
+		
+		String messageFiles = Integer.toString(id) + "Messages.txt";
+		try {
+            File file = new File(messageFiles);
+
+            if (file.createNewFile()) {
+                
+            } else {
+                
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
+		
+		String membersFiles = Integer.toString(id) + "Members.txt";
+		
+		try {
+            File file = new File(membersFiles);
+
+            if (file.createNewFile()) {
+                
+            } else {
+                
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
 		
 		
 		try //this will populate messages and members of a chatroom

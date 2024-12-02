@@ -98,7 +98,7 @@ public class LogManager {
 		for(Integer ID : allChatroomIDs) {
 			try 
 	        {
-	            String messageFile = Integer.toString(ID) + "Inbox.txt";
+	            String messageFile = Integer.toString(ID) + "Messages.txt";
 
 	            File myFile = new File(messageFile);
 	            Scanner reader = new Scanner(myFile);
