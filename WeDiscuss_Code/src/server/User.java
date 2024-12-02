@@ -5,106 +5,215 @@ import java.io.*;
 
 
 import shared.Message;
+import shared.MessageCreator;
+import shared.MessageType;
 
 public class User implements Serializable{
 	//static counter to generate unique IDs
-	//private static int IDCounter = 0;
+	private static int IDCounter = 0;
 	
 	private String username;
 	private String password;
 	private int ID;
 	private boolean status; //False = offline, True = online
 	private boolean adminStatus; //False = non-admin, True = admin
-	private List<Message> messageInbox;
-	private List<Integer> involvedChatrooms;
+	private List<Message> messageInbox = Collections.synchronizedList(new ArrayList<Message>());;
+	private List<Integer> involvedChatrooms = Collections.synchronizedList(new ArrayList<Integer>());;
 	
 
 	
-	//Constructor
+	//Constructor when loading
 	public User(String username, String password, boolean adminStatus, int userID) {
 		this.username = username;
 		this.password = password;
 		this.adminStatus = adminStatus;
 		this.ID = userID;
+		
+		//just for keeping it
+		if(userID >= IDCounter)
+		{
+			IDCounter = userID;
+		}
 		this.status = false; //Initially offline
-		this.messageInbox = loadMessageInbox();
-		this.involvedChatrooms = loadChatrooms();
+		loadMessageInbox();
+		loadChatrooms();
 	}
+	
+	//Constructor when making new account
+		public User(String username, String password, boolean adminStatus) {
+			this.username = username;
+			this.password = password;
+			this.adminStatus = adminStatus;
+			//increment ID Counter
+			IDCounter += 6;
+			this.ID = IDCounter+6;
+			
+			
+			this.status = false; //Initially offline
+			
+			String messageFile = Integer.toString(ID) + "Inbox.txt";
+			try {
+	            File file = new File(messageFile);
+
+	            if (file.createNewFile()) {
+	                
+	            } else {
+	                System.out.println("File already exists.");
+	            }
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+			
+			String chatsFile = Integer.toString(ID) + "Chats.txt";
+			
+			try {
+	            File file = new File(chatsFile);
+
+	            if (file.createNewFile()) {
+	                
+	            } else {
+	                System.out.println("File already exists.");
+	            }
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	        }
+			
+		}
 	
 		
 		
 	//Load messages from inbox file
-	private List<Message> loadMessageInbox() {
-		List<Message> messages = new ArrayList<>();
-		String filename = username + ID + "inbox.text";
+	public void loadMessageInbox() {
+		
+		try 
+		{
+			String messageFile = Integer.toString(ID) + "Inbox.txt";
 			
-		try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(filename))) {
-				while (true) {
-					try {
-						Message message = (Message) ois.readObject();
-						messages.add(message);
-					} catch (EOFException e) {
-						break;
-					}
+			File myFile = new File(messageFile);
+			Scanner reader = new Scanner(myFile);
+
+			//first populate the messages of the inbox
+			while (reader.hasNextLine())
+			{
+				//getline and set delimiters
+				Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \\s+ means whitespace
+				
+				ArrayList<String> token = new ArrayList<String>();
+				line.tokens();
+				
+				//grab all the tokens
+				while(line.hasNext())
+				{
+					token.add(line.next());
 				}
-		} catch (FileNotFoundException e) {
-			System.err.out.println("Error. File name not found: " + e.getMessage());
-		} catch (IOException | ClassNotFoundException e) {
-			System.err.println("Error reading inbox file: " + e.getMessage());
-		}
+				
+				//if there are more or less than 7 tokens, then it is invalid
+				if (token.size() != 7)
+				{
+					line.close(); //do nothing and skip this iteration
+            		continue;
+				}
+				
+				//add all message to the arraylist
+				Message add;
+				MessageCreator create;
+				create = new MessageCreator(MessageType.UTU);
+				
+				create.setContents(token.get(0)); //add the message
+				create.setDate(Long.parseLong(token.get(1))); // add the date
+				create.setToUserName(token.get(2)); //add the toUsername
+				create.setToUserID(Integer.parseInt(token.get(3))); //add the toUserid
+				
+				create.setFromUserName(token.get(4)); //add from username
+				create.setFromUserID(Integer.parseInt(token.get(5))); //add from user id
+				
+				add = new Message(create);
+				
+				messageInbox.add(add);
+				
+				line.close();
+			}
+			reader.close();
 			
-		return messages;
+		}
+		catch (IOException e) {
+        	e.printStackTrace();
+        }
 	}
 		
 
-	//Load chatrooms IDs from the charooms file
-	private List<Integer> loadChatrooms() {
+	//Load chatrooms IDs from the chatrooms file
+	public void loadChatrooms() {
 		
-		List<Integer> chatrooms = new ArrayList<>();			
-		String filename = username + ID + "chatrooms.text";
+		try 
+		{
+			
+			String chatsFile = Integer.toString(ID) + "Chats.txt";
+			
+			File File = new File(chatsFile);
+			Scanner readers = new Scanner(File);
+
+			//first populate the chatroom ids
+			while (readers.hasNextLine())
+			{
+				//getline and set delimiters
+				Scanner line = new Scanner(readers.nextLine()).useDelimiter("\\s+"); // \\s+ means whitespace
 				
-		try(BufferedReader reader = new BufferedReader(new FileReader(filename))){
+				ArrayList<String> token = new ArrayList<String>();
+				line.tokens();
 				
-			String line;		
-			while ((line = reader.readLine()) != null) {
-					
-				try {				
-					chatrooms.add(Integer.parseInt(line.trim()));			
-				} catch (NumberFormatException e) {				
-					System.err.println("Invcalid chatroom ID in file: " + line);			
-				}			
+				//grab all the tokens
+				while(line.hasNext())
+				{
+					token.add(line.next());
+				}
+				
+				//if there are more or less than 1 tokens, then it is invalid
+				if (token.size() != 1)
+				{
+					line.close(); //do nothing and skip this iteration
+            		continue;
+				}
+				
+				//add chatroom ids to array
+				involvedChatrooms.add(Integer.valueOf(token.get(0)));
+				
+				line.close();
 			}
-						
-		} catch (FileNotFoundException e) {		
-			System.err.println("Error. File name not found: " + e.getMessage());
-		} catch (IOException e) {	
-			System.err.println("Error reading chatrooms file: " + e.getMessage());
+			readers.close();
+			
+			
 		}
-		
-		return chatrooms;
+		catch (IOException e) {
+        	e.printStackTrace();
+        }
 		
 	}
 	
 	
-	
-	//Save message to inbox file
-	private void saveMessageToFile(Message message) {
-		String filename = username + ID + "inbox.text";
-		try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename, true))) {
-			oos.writeObject(message);
-		} catch (IOException e) {
-			System.err.println("Error writing to inbox file: " + e.getMessage());
-		}
-	}
 		
 		
 	//save chatroom ID to chatrooms file
-	private void saveChatroomToFile(int chatroomID) {
-		String filename = username + ID + "chatrooms.text";
-		try (PrintWriter writer = new PrintWriter(new FileWriter(filename, true))) {
-			writer.println();
-		} catch (IOException e) {
-			System.err.println("Error writing to chatrooms file: " + e.getMessage());
+	public void saveChatrooms() {
+		
+		String chatsFile = Integer.toString(ID) + "Chats.txt";
+		
+		try
+		{
+			FileWriter myFile = new FileWriter(chatsFile); //open file to save on
+			for (int i=0; i<involvedChatrooms.size(); i++)
+			{
+				int userID = involvedChatrooms.get(i);
+				
+				//write information to file
+				myFile.write(Integer.toString(userID));
+				myFile.write("\n");
+			}
+			myFile.close();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
 		}
 	}	
 		
@@ -156,7 +265,7 @@ public class User implements Serializable{
 	//Get list of chatrooms the user is involved in
 	//return list of chatroom IDs
 	public List<Integer> getChatrooms() {
-		return new ArrayList<>(involvedChatrooms);
+		return involvedChatrooms;
 	}
 	
 	//Add a chatroom to the user's involved chatrooms list
@@ -164,15 +273,33 @@ public class User implements Serializable{
 	public void addChatroom(int chatroomID) {
 		if (!involvedChatrooms.contains(chatroomID)) {
 			involvedChatrooms.add(chatroomID);
-			saveChatroomToFile(chatroomID);
+			saveChatrooms();
 		}
 	}
 	
 	//Add a message to the user's inbox
 	//Update: added ability to save message to file
 	public void addToInbox(Message message) {
-		messageInbox.add(message);
-		saveMessageToFile(message);
+		this.messageInbox.add(message);
+		
+		//append the message to the messagesFile
+		String messageFile = Integer.toString(ID) + "Inbox.txt";
+		try
+		{
+			FileWriter myFile = new FileWriter(messageFile, true); //open file in append mode
+			
+			String line = message.storeInboxMessage(); //get storable message
+				
+			//write information at the end of the file
+			myFile.write(line);
+			myFile.write("\n");
+			myFile.close();
+			
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	//Display all messages in the user's inbox
@@ -188,7 +315,7 @@ public class User implements Serializable{
 	}
 		
 	//Set the user's online status
-	protected void setStatus(boolean status) {
+	public void setStatus(boolean status) {
 		this.status = status;
 	}
 	
