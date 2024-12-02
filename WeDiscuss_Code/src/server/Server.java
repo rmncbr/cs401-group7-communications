@@ -25,8 +25,8 @@ public class Server {
 		this.serverIP = InetAddress.getLocalHost().getHostAddress().trim();
 		this.running = false;
 		this.userManager = new UserManager();
-		this.logManager = new LogManager();
 		this.chatroomManager = new ChatroomManager(this);
+		this.logManager = new LogManager(userManager.getAllUserIDs(), chatroomManager.getAllChatroomIDs());
 		this.listOfClients = new ConcurrentHashMap<>();
 		this.clientThreads = new ConcurrentHashMap<>();
 		this.executorService = Executors.newFixedThreadPool(MAX_THREADS);
@@ -34,9 +34,7 @@ public class Server {
 	
 	public static void main(String[] args) throws UnknownHostException {
 		Server server = new Server(8080); //temp port for testing
-		server.start();
-		
-		
+		server.start();	
 	}
 	
 	public void start() {
@@ -52,6 +50,8 @@ public class Server {
 		try {
 			if (serverSocket != null && !serverSocket.isClosed()) {
 				serverSocket.close();
+				userManager.saveUsers();
+				while(!logManager.isLogQueueEmpty());
 				System.out.println("Server stopped.");
 			}
 		} catch (IOException e) {
@@ -193,9 +193,11 @@ public class Server {
 						break;
 					case UTU:
 							userManager.sendMessage(output, message, listOfClients);
+							logManager.addToLogQueue(message);	
 						break;
 					case UTC:
 							chatroomManager.sendMessageToChatroom(output, message, listOfClients);
+							logManager.addToLogQueue(message);
 						break;
 					default:
 						break;

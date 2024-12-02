@@ -21,6 +21,7 @@ public class UserManager {
 	private List<String> activeUsers = Collections.synchronizedList(new ArrayList<String>()); // list of active users
 	private List<String> allUsernames = Collections.synchronizedList(new ArrayList<String>()); // list of all usernames
 	
+	private List<Integer> allUserIDs = Collections.synchronizedList(new ArrayList<Integer>()); // list of all userIDs
 	
 	//filename
 	private String userFile = "UserFile.txt";
@@ -69,7 +70,7 @@ public class UserManager {
 				//create user and add it to list of all users
 				User makeuser = new User(token.get(0), token.get(1), Boolean.valueOf(token.get(2)), id);
 				allUsers.put(token.get(0), makeuser);
-				
+				allUserIDs.add(Integer.parseInt(token.get(1)));
 				
 				line.close();
 			}
@@ -80,6 +81,10 @@ public class UserManager {
         }
 	}
 	
+	
+	public List<Integer> getAllUserIDs(){
+		return allUserIDs;
+	}
 	
 	public String getUsername(int id)
 	{

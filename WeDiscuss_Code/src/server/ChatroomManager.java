@@ -18,6 +18,9 @@ public class ChatroomManager {
 	
 	private static int chatroomCounter = 0;
 	private Server server;
+	
+	boolean modified = false;
+	
 	public ChatroomManager(Server server)
 	{
 		this.server = server;
@@ -68,6 +71,38 @@ public class ChatroomManager {
         }
 	}
 	
+	public List<Integer> getAllChatroomIDs() {
+		return chatroomIDs;
+	}
+	
+	public void saveUsers()
+	{
+		
+		if (modified == false) // check if saving is needed
+		{
+			return;
+		}
+		try
+		{
+			FileWriter myFile = new FileWriter(chatroomFile); //open file to save on
+			for (int i=0; i<chatroomIDs.size(); i++)
+			{
+				Integer id = chatroomIDs.get(i);
+				
+				//writ information to file
+				myFile.write(Integer.toString(id));
+				myFile.write("\r\n");
+			}
+			modified = false;
+			myFile.close();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public void sendMessageToChatroom(ObjectOutputStream out, Message message, ConcurrentHashMap<Integer, ObjectOutputStream> clients)
 	{
 		try
@@ -101,7 +136,7 @@ public class ChatroomManager {
 			
 			
 			receive.addMessage(message); //give message to chatroom so they can store it
-			
+
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
 					if(receive.findMember(client)) {
@@ -168,7 +203,7 @@ public class ChatroomManager {
 				}
 			});
 
-			join.addMember(message.getFromUserID());
+			join.addMember(message.getFromUserID());;
 			
 			create.setContents("Success");
 			create.setChatroom(join);
@@ -273,7 +308,8 @@ public class ChatroomManager {
             Integer chatId = make.getChatroomID();
             chatroomIDs.add(chatId);
             chatrooms.put(chatId, make);
-
+            modified = true;
+            
             create.setContents("Success");
             create.setToChatroom(make.getChatroomID()); // set the chatroom ID
             create.setChatroom(make); // set the chatroom object
@@ -327,6 +363,7 @@ public class ChatroomManager {
 			
 			chatroomIDs.remove(id);
 			chatrooms.remove(id);
+			modified = true;
 			
 			create.setContents("Success");
 			Send = new Message(create);// create an accept message
