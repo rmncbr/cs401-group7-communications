@@ -6,14 +6,57 @@ import java.io.Serializable;
 import java.util.*;
 
 public class Chatroom implements Serializable {
+	private static int IDCounter =0;
 	private int id;
-	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());;
+	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());
 	private List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
 	
+	//constructor when making a new chatroom
+	public Chatroom()
+	{
+		IDCounter += 6;
+		id = IDCounter;
+		
+		
+		String messageFile = Integer.toString(id) + "Messages.txt";
+		try {
+            File file = new File(messageFile);
+
+            if (file.createNewFile()) {
+                
+            } else {
+                System.out.println("File already exists.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+		
+		String membersFile = Integer.toString(id) + "Members.txt";
+		
+		try {
+            File file = new File(membersFile);
+
+            if (file.createNewFile()) {
+                
+            } else {
+                System.out.println("File already exists.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+	}
+	
+	//constructor when loading existing chatroom
 	public Chatroom(int chatroomID) {
 		this.id = chatroomID;
 		
-		try //this will populate the valid user accounts
+		if(chatroomID >= IDCounter)
+		{
+			IDCounter = chatroomID;
+		}
+		
+		
+		try //this will populate messages and members of a chatroom
 		{
 			String messageFile = Integer.toString(id) + "Messages.txt";
 			
@@ -94,7 +137,7 @@ public class Chatroom implements Serializable {
 				
 				line.close();
 			}
-			reader.close();
+			readers.close();
 			
 			
 		}
@@ -124,14 +167,11 @@ public class Chatroom implements Serializable {
 		try
 		{
 			FileWriter myFile = new FileWriter(messageFile, true); //open file in append mode
-			for (int i=0; i<messages.size(); i++)
-			{
-				String line = messages.get(i).storeChatroomMessage();
+			String line = message.storeChatroomMessage();
 				
-				//write information at the end of the file
-				myFile.write(line);
-				myFile.write("\n");
-			}
+			//write information at the end of the file
+			myFile.write(line);
+			myFile.write("\n");
 			myFile.close();
 		}
 		catch(IOException e)
