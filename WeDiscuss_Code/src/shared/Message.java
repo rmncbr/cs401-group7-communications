@@ -28,7 +28,7 @@ public class Message implements Serializable{
 	
 	public Message(MessageCreator messageCreator) {
 		this.contents = messageCreator.getContents();
-		this.dateSent = new Date();
+		this.dateSent = messageCreator.getDate();
 		this.toUserName = messageCreator.getToUserName();
 		this.toUserID = messageCreator.getToUserID();
 		this.fromUserName = messageCreator.getFromUserName();
