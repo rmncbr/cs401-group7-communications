@@ -278,23 +278,11 @@ public class ChatroomManager {
 					if(outReceiver != null)
 					{
 						outReceiver.writeObject(create.createMessage());
-						outReceiver.flush();
 					}
 				}
 			}
 			
 			
-			clients.keySet().parallelStream().forEach(client ->{
-				try {
-					if(receive.findMember(client) && client != message.getToUserID()) {
-						clients.get(client).writeObject(create.createMessage());
-						clients.get(client).flush();
-					}
-				}
-				catch(IOException e) {
-					System.err.println("Error sending update to a client!");
-				}
-			});
 			
 			receive.addMember(message.getToUserID()); //give user ID to chatroom so they can store it
 			
@@ -307,6 +295,8 @@ public class ChatroomManager {
 		    create.setContents("Add");
 		    create.setChatroom(receive);
 		    Send = new Message(create);
+		    
+		    
 		    clients.get(message.getToUserID()).writeObject(Send);
 		    
 		    return message.getToUserID();
