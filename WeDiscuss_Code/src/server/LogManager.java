@@ -86,7 +86,11 @@ public class LogManager {
 
 
 	                add = new Message(create);
-
+	                
+	                if(userMessageLogs.get(ID) == null) {
+	                	userMessageLogs.put(ID, new ArrayList<Message>());
+	                }
+	                
 	                userMessageLogs.get(ID).add(add);
 
 	                line.close();
@@ -158,6 +162,9 @@ public class LogManager {
 
 	                add = new Message(create);
 
+	                if(chatroomMessageLogs.get(ID) == null) {
+	                	chatroomMessageLogs.put(ID, new ArrayList<Message>());
+	                }
 	                chatroomMessageLogs.get(ID).add(add);
 
 	                line.close();
@@ -187,7 +194,7 @@ public class LogManager {
         
         for (int i=0; i<messages.size(); i++)
         {
-        	result += messages.get(i).toString();
+        	result += messages.get(i).buildUserLog();
         	result += "|";
         	
         }
@@ -203,10 +210,27 @@ public class LogManager {
 
 	public void getChatroomMessages(ObjectOutputStream output, Message message) {
         int chatroomID = message.getToChatroomID(); 
+        Message Send;
+        MessageCreator create;
+        create = new MessageCreator(MessageType.GCL);
+        create.setContents("Error");
+        Send = new Message(create);
+        
         List<Message> messages = chatroomMessageLogs.getOrDefault(chatroomID, new ArrayList<>());
+        String result = "";
+        
+        for (int i=0; i<messages.size(); i++)
+        {
+        	result += messages.get(i).buildChatLog();
+        	result += "|";
+        	
+        }
+
+        create.setContents(result);
+        Send = new Message(create);
         
         try {
-            output.writeObject(messages); 
+            output.writeObject(Send); 
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -353,6 +353,7 @@ public class Client {
 					case GCL:
 						// message w/ log contents
 						clientGui.addToMessageQueue(message);
+						
 						break;
 					case CC:
 						// messge w/ chatroom id

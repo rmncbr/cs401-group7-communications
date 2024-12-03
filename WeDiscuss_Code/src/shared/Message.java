@@ -117,15 +117,21 @@ public class Message implements Serializable{
 			result = "FROM: " + this.fromUserName + "/ " + this.contents;
 		}
 		
-		else if(this.messageType == MessageType.GUL)
-		{
-			result = "FROM: " + this.fromUserName + "/ " + this.contents + "  /TO "+ this.toUserName;
-		}
+		return result;
+	}
+	
+	public String buildUserLog() {
+		String result = "";
 		
-		else if(this.messageType == MessageType.GCL)
-		{
-			result = "FROM: " + this.fromUserName + "/ " + this.contents + "  /TO Chatroom ID:"+ this.toChatroomID;
-		}
+		result = "FROM: " + this.fromUserID + "/ " + this.contents + this.toUserName;
+		
+		return result;
+	}
+	
+	public String buildChatLog() {
+		String result = "";
+		result = "FROM: " + this.fromUserID + "/ " + this.contents;
+		
 		return result;
 	}
 	

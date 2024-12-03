@@ -330,7 +330,7 @@ public class ClientUI extends JFrame {
 	}
 
 	protected void processGetUserLogs(Message message) {
-		if (message.getContents().equals("Success")) {
+		if (true) {
             SwingUtilities.invokeLater(() -> {
             // display dialog of user logs
 
@@ -343,8 +343,9 @@ public class ClientUI extends JFrame {
             
             
             userLogModel.clear();
-            for (String log : userLog) {
+            for (String log : split) {
                 userLogModel.addElement(log); // Add to the model
+                System.out.println("Added A Log!");
             }
             
             
@@ -370,7 +371,44 @@ public class ClientUI extends JFrame {
 	}
 
 	protected void processGetChatroomLogs(Message message) {
+		if (true) {
+            SwingUtilities.invokeLater(() -> {
+            // display dialog of user logs
 
+            JDialog userLogDialog = new JDialog(mainFrame, "Chatroom" , true);
+            userLogModel = new DefaultListModel<>();
+            
+            
+            String userLog = message.getContents();
+            String[] split = userLog.split("\\|");
+            
+            
+            userLogModel.clear();
+            for (String log : split) {
+                userLogModel.addElement(log); // Add to the model
+                System.out.println("Added A Log!");
+            }
+            
+            
+            
+            JList<String> userLogList = new JList<>(userLogModel);
+            userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            JScrollPane usersScrollPane = new JScrollPane(userLogList);
+
+            userLogDialog.setLayout(new BorderLayout());
+            userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
+
+            userLogDialog.setSize(200, 150);
+            userLogDialog.setLocationRelativeTo(mainFrame);
+            userLogDialog.setVisible(true);
+//
+            userLogDialog.revalidate();
+            userLogDialog.repaint();
+            });
+        } else {
+            System.out.println("Error obtaining user log.");
+        }
 	}
 
 	/* Do-Functions */
