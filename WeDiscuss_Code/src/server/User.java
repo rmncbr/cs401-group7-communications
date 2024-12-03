@@ -320,7 +320,9 @@ public class User implements Serializable{
 	}
 	
 	
-	
+	public ConcurrentHashMap<Integer, List<Message>> getMessagesFromUsers() {
+		return messagesFromUsers;
+	}
 	
 	//Get user's username
 	//return username
