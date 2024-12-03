@@ -173,9 +173,9 @@ public class LogManager {
 		}
 	}
 	
-	public void getUserMessages(ObjectOutputStream output, Message message) {
+	public void getUserMessages(ObjectOutputStream output, Message message, Integer ToUserID) {
 		
-        int userID = message.getFromUserID();
+        int userID = ToUserID;
         Message Send;
         MessageCreator create;
         create = new MessageCreator(MessageType.GUL);
@@ -211,18 +211,6 @@ public class LogManager {
             e.printStackTrace();
         }
 	}// getChatroomMessages
-	
-	
-	/******/
-
-	public void answerLogRequest(Message message) {
-        MessageType type = message.getMessageType();
-        if (type == MessageType.GUL) {  // Get User Logs
-            getUserMessages(null, message);
-        } else if (type == MessageType.GCL) {  // Get Chatroom Logs
-            getChatroomMessages(null, message);
-        }
-	}// answerLogRequest
 
 	public void storeMessage(Message message) {
 		// Check if the message is addressed to a specific user

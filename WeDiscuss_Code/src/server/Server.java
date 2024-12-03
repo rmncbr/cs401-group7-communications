@@ -190,7 +190,7 @@ public class Server {
 							userManager.changeUserPassword(output, message);
 						break;
 					case GUL:
-							logManager.getUserMessages(output, message);
+							logManager.getUserMessages(output, message, userManager.getUserID(message.getToUserName()));
 						break;
 					case GCL:
 							logManager.getChatroomMessages(output, message);
