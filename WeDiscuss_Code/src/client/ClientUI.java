@@ -108,14 +108,15 @@ public class ClientUI extends JFrame {
 					createPrivateMessageArea(userID);
 					
 					List<Message> messages = table.get(userID);
-					for (int i=0; i < messages.size(); i++)
-					{
-						createPrivateMessageArea(userID); // Create if not exists
-						JTextArea privateArea = privateMessageAreas.get(userID);
-						if (privateArea != null) {
-							privateArea.append(messages.get(i).getFromUserName() + ": " + messages.get(i).getContents() + "\n");
+					if(!(messages == null)) {
+						for(Message m : messages) {
+							createPrivateMessageArea(userID); // Create if not exists
+							JTextArea privateArea = privateMessageAreas.get(userID);
+							if (privateArea != null) {
+								privateArea.append(m.getFromUserName() + ": " + m.getContents() + "\n");
+							}
+							//appendMessageToCorrectArea(messages.get(i));
 						}
-						//appendMessageToCorrectArea(messages.get(i));
 					}
 					
 					MessageCreator pm = new MessageCreator(MessageType.LOGIN);
@@ -127,10 +128,20 @@ public class ClientUI extends JFrame {
 
 				// Update chatroom messages list
 				chatroomMessagesModel.clear();
+				System.out.println(chatrooms.size());
 				for (Integer chatroomID : chatrooms.keySet()) {
 					createChatroomMessageArea(chatroomID);
-					
-					
+					List<Message> messages = chatrooms.get(chatroomID).getMessages();
+					if(!(messages == null)) {
+						System.out.println(message.storeChatroomMessage());
+						for(Message m : messages) {
+							createChatroomMessageArea(chatroomID);
+							JTextArea chatroomArea = chatroomMessageAreas.get(chatroomID);
+							if(chatroomArea != null) {
+								chatroomArea.append(m.getFromUserName() + ": " + m.getContents() + "\n");
+							}
+						}
+					}
 					
 					MessageCreator cr = new MessageCreator(MessageType.LOGIN);
 					cr.setToChatroom(chatroomID);
