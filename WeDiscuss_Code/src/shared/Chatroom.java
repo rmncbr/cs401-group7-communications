@@ -9,7 +9,7 @@ public class Chatroom implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private static int IDCounter = 0;
+	private static int IDCounter =0;
 	private int id;
 	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());
 	private List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
@@ -101,7 +101,7 @@ public class Chatroom implements Serializable {
 			while (reader.hasNextLine())
 			{
 				//getline and set delimiters
-				Scanner line = new Scanner(reader.nextLine()).useDelimiter("\\|"); // \\s+ means whitespace
+				Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \\s+ means whitespace
 				
 				ArrayList<String> token = new ArrayList<String>();
 				line.tokens();
@@ -183,7 +183,6 @@ public class Chatroom implements Serializable {
 	public Chatroom(int chatroomID, int creatorID) {
 		this.id = chatroomID;
 		this.members.add(creatorID);
-		saveMembers();
 	}
 	
 	public int getChatroomID() {
@@ -192,6 +191,10 @@ public class Chatroom implements Serializable {
 	
 	public List<Message> getMessages() {
 		return this.messages;
+	}
+	
+	public List<Integer> getMembers() {
+		return this.members;
 	}
 	
 	public void addMessage(Message message) {
@@ -223,8 +226,8 @@ public class Chatroom implements Serializable {
 	
 	public Boolean findMember(int userID) {
 		if (this.members.contains(userID)) {
-            return true;
-		} else {
+            return true;        } 
+		else {
             return false;
         }
     }
@@ -241,7 +244,7 @@ public class Chatroom implements Serializable {
 	
 	public void removeMember(int userID) {
 		if (this.members.contains(userID)) {
-			this.members.remove((Integer) userID);
+			this.members.remove(userID);
 			saveMembers();
 		} else {
 			System.out.println("User does not exist in chatroom.");
