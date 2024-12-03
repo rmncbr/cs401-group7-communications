@@ -343,9 +343,20 @@ public class ClientUI extends JFrame {
 	}
 	
 	private void processJoinChatroom(Message message) {
+		SwingUtilities.invokeLater(() -> {
+			if (message.getContents().equals("Success")) {
+				// Add chatroom to the map
+				chatrooms.put(message.getChatroom().getChatroomID(), message.getChatroom());
 
-		// Here we would call a new thread of DisplayChatMessages until the user returns
-		// to Main Menu
+				// Add chatroom to the chatroomsListModel
+				chatroomsListModel.addElement("Chatroom " + message.getToChatroomID());
+			} else {
+				System.out.println("Error joining chatroom.");
+			}
+			 loadChatrooms();
+			System.out.println("List of Chatrooms Updated!");
+		});
+		
 	}
 
 	/* admin processing */
