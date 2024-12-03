@@ -19,7 +19,7 @@ public class LogManager {
 	static ConcurrentHashMap<Integer, List<Message>> chatroomMessageLogs;
 	private static ConcurrentLinkedQueue<Message> messageQueue = new ConcurrentLinkedQueue<Message>();
 
-	LogManager(List<Integer> allUserIDs, List<Integer> allChatroomIDs) {
+	public LogManager(List<Integer> allUserIDs, List<Integer> allChatroomIDs) {
 		userMessageLogs = new ConcurrentHashMap<Integer, List<Message>>();
 		chatroomMessageLogs = new ConcurrentHashMap<Integer, List<Message>>();
 		loadUserMessages(allUserIDs);
@@ -55,7 +55,7 @@ public class LogManager {
 	            while (reader.hasNextLine())
 	            {
 	                //getline and set delimiters
-	                Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \s+ means whitespace
+	                Scanner line = new Scanner(reader.nextLine()).useDelimiter("\\|"); // \s+ means whitespace
 
 	                ArrayList<String> token = new ArrayList<String>();
 	                line.tokens();
@@ -67,7 +67,7 @@ public class LogManager {
 	                }
 
 	                //if there are more or less than 4 tokens, then it is invalid
-	                if (token.size() != 4)
+	                if (token.size() != 5)
 	                {
 	                    line.close(); //do nothing and skip this iteration
 	                    continue;
@@ -80,7 +80,9 @@ public class LogManager {
 	                
 	                create.setFromUserID(Integer.parseInt(token.get(0))); //add from user id
 	                create.setContents(token.get(1)); //add the message
+	                
 	                create.setDate(Long.parseLong(token.get(2))); // add the date
+	                create.setToUserName(token.get(3));
 
 
 	                add = new Message(create);
@@ -126,7 +128,7 @@ public class LogManager {
 	            while (reader.hasNextLine())
 	            {
 	                //getline and set delimiters
-	                Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \s+ means whitespace
+	                Scanner line = new Scanner(reader.nextLine()).useDelimiter("\\|"); // \s+ means whitespace
 
 	                ArrayList<String> token = new ArrayList<String>();
 	                line.tokens();
@@ -172,11 +174,28 @@ public class LogManager {
 	}
 	
 	public void getUserMessages(ObjectOutputStream output, Message message) {
-        int userID = message.getFromUserID(); 
+		
+        int userID = message.getFromUserID();
+        Message Send;
+        MessageCreator create;
+        create = new MessageCreator(MessageType.GUL);
+        create.setContents("Error");
+        Send = new Message(create);
+        
         List<Message> messages = userMessageLogs.getOrDefault(userID, new ArrayList<>());
+        String result = "";
+        
+        for (int i=0; i<messages.size(); i++)
+        {
+        	result += messages.get(i).toString();
+        	result += "|";
+        	
+        }
+        create.setContents(result);
+        Send = new Message(create);
         
         try {
-            output.writeObject(messages);  
+            output.writeObject(Send);  
         } catch (IOException e) {
             e.printStackTrace();
         }
