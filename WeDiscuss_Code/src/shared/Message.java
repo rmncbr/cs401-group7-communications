@@ -123,7 +123,7 @@ public class Message implements Serializable{
 	public String buildUserLog() {
 		String result = "";
 		
-		result = "FROM: " + this.fromUserID + "/ " + this.contents + this.toUserName;
+		result = "FROM: " + this.fromUserID + "/ " + this.contents + "/ To Username: " + this.toUserName;
 		
 		return result;
 	}

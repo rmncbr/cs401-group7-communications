@@ -186,22 +186,6 @@ public class ChatroomManager {
 				out.writeObject(Send);
 				return -1;
 			}
-			
-			create.setContents("Add");
-			create.setFromUserID(message.getFromUserID());
-			create.setToChatroom(join.getChatroomID());
-			
-			// Let others know client is joining the chatroom
-			clients.keySet().parallelStream().forEach(client ->{
-				try {
-					if(join.findMember(client)) {
-						clients.get(client).writeObject(create.createMessage());
-					}
-				}
-				catch(IOException e) {
-					System.err.println("Error sending update to a client!");
-				}
-			});
 
 			join.addMember(message.getFromUserID());;
 			
@@ -246,27 +230,6 @@ public class ChatroomManager {
 				out.writeObject(Send); //send the deny message
 				return -1;
 			}
-			
-			create.setContents("Add");
-			create.setFromUserID(message.getToUserID());
-			create.setToChatroom(receive.getChatroomID());
-			
-			// Let others know client is joining the chatroom
-			List<Integer> members = receive.getMembers();
-			
-			for(int i=0; i<members.size(); i++)
-			{
-				if (clients.containsKey(members.get(i)))
-				{
-					ObjectOutputStream outReceiver = clients.get(members.get(i));
-					if(outReceiver != null)
-					{
-						outReceiver.writeObject(create.createMessage());
-					}
-				}
-			}
-			
-			
 			
 			receive.addMember(message.getToUserID()); //give user ID to chatroom so they can store it
 			
@@ -418,9 +381,15 @@ public class ChatroomManager {
 			
 			create.setContents("Remove");
 			create.setToUserID(message.getToUserID());
-			create.setToChatroom(receive.getChatroomID());
+			create.setToChatroom(message.getToChatroomID());
+			create.setFromUserID(message.getFromUserID());
+			create.setFromUserName(message.getFromUserName());
 			
-			out.writeObject(create.createMessage());
+			Send = new Message(create);
+			
+			out.writeObject(Send);
+			
+			System.out.println("I sent leave");
 
 		}
 		catch(IOException e)

@@ -267,6 +267,8 @@ public class Client {
 		if(user != null) {
 			messageCreator.setFromUserName(user.getUsername());
 			messageCreator.setFromUserID(user.getID());
+			messageCreator.setToUserID(user.getID());
+			messageCreator.setToUserName(user.getUsername());
 		}
 		
 		sendMessage(messageCreator.createMessage());
@@ -299,6 +301,7 @@ public class Client {
 			catch(IOException | ClassNotFoundException e) {
 				connected = false;
 				System.out.println("Lost connection to server!");
+				// e.printStackTrace();
 				closeResources();
 			}
 			
