@@ -53,6 +53,11 @@ public class ClientUI extends JFrame {
 	private DefaultListModel<Message> chatroomMessagesModel = new DefaultListModel<>();
 	private JList<Message> privateMessagesList = new JList<>(privateMessagesModel);
 	private JList<Message> chatroomMessagesList = new JList<>(chatroomMessagesModel);
+	
+	//logs
+    DefaultListModel<String> userLogModel;
+    DefaultListModel<String> chatroomLogModel;
+	
 	DefaultListModel<String> usersListModel;
 	DefaultListModel<String> chatroomsListModel;
 	
@@ -142,7 +147,6 @@ public class ClientUI extends JFrame {
 						for (Message m : messages) {
 							createChatroomMessageArea(chatroomID);
 							JTextArea chatroomArea = chatroomMessageAreas.get(chatroomID);
-							appendMessageToCorrectArea(m);
 							if (chatroomArea != null) {
 								chatroomArea.append(m.getFromUserName() + ": " + m.getContents() + "\n");
 							}
@@ -278,16 +282,16 @@ public class ClientUI extends JFrame {
 
 	private void processUserMessage(Message message) {
 		// This function handles private messages (UTU)
-		if (activeTabIndex == 0) {
+		
 			appendMessageToCorrectArea(message);
-		}
+		
 	}
 
 	private void processChatroomMessage(Message message) {
 		// This function handles chatroom messages (UTC)
-		if (activeTabIndex == 1) {
+		
 			appendMessageToCorrectArea(message);
-		}
+		
 	}
 
 	private void processCreateChatroom(Message message) {
@@ -326,7 +330,43 @@ public class ClientUI extends JFrame {
 	}
 
 	protected void processGetUserLogs(Message message) {
+		if (message.getContents().equals("Success")) {
+            SwingUtilities.invokeLater(() -> {
+            // display dialog of user logs
 
+            JDialog userLogDialog = new JDialog(mainFrame, "Users", true);
+            userLogModel = new DefaultListModel<>();
+            
+            
+            String userLog = message.getContents();
+            String[] split = userLog.split("\\|");
+            
+            
+            userLogModel.clear();
+            for (String log : userLog) {
+                userLogModel.addElement(log); // Add to the model
+            }
+            
+            
+            
+            JList<String> userLogList = new JList<>(userLogModel);
+            userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+            JScrollPane usersScrollPane = new JScrollPane(userLogList);
+
+            userLogDialog.setLayout(new BorderLayout());
+            userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
+
+            userLogDialog.setSize(200, 150);
+            userLogDialog.setLocationRelativeTo(mainFrame);
+            userLogDialog.setVisible(true);
+//
+            userLogDialog.revalidate();
+            userLogDialog.repaint();
+            });
+        } else {
+            System.out.println("Error obtaining user log.");
+        }
 	}
 
 	protected void processGetChatroomLogs(Message message) {

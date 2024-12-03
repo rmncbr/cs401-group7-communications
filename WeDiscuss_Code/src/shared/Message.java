@@ -167,6 +167,7 @@ public class Message implements Serializable{
 		result += Integer.toString(this.fromUserID) + "|";
 		result += this.contents + "|";
 		result += this.dateSent.getTime() + "|";
+		result += this.toUserName + "|";
 		
 		String type = typeToString(this.messageType);
 		
@@ -180,6 +181,7 @@ public class Message implements Serializable{
 		result += Integer.toString(this.fromUserID) + "|";
 		result += this.contents + "|";
 		result += this.dateSent.getTime() + "|";
+		
 		
 		String type = typeToString(this.messageType);
 		

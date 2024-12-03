@@ -190,7 +190,7 @@ public class Server {
 							userManager.changeUserPassword(output, message);
 						break;
 					case GUL:
-							logManager.getUserMessages(output, message);
+							logManager.getUserMessages(output, message, userManager.getUserID(message.getToUserName()));
 						break;
 					case GCL:
 							logManager.getChatroomMessages(output, message);
@@ -268,7 +268,6 @@ public class Server {
 			listOfClients.values().parallelStream().forEach(output ->{
 				try {
 					output.writeObject(messageCreator.createMessage());
-					output.flush();
 				}
 				catch(IOException e) {
 					System.err.println("Error sending update to a client!");
@@ -296,7 +295,6 @@ public class Server {
 	            listOfClients.values().parallelStream().forEach(output -> {
 	                try {
 	                    output.writeObject(messageCreator.createMessage());
-	                    output.flush();
 	                } catch (IOException e) {
 	                    System.err.println("Error sending chatroom update to a client!");
 	                }
@@ -311,7 +309,6 @@ public class Server {
 	        listOfClients.values().parallelStream().forEach(output -> {
 	            try {
 	                output.writeObject(messageCreator.createMessage());
-	                output.flush();
 	            } catch (IOException e) {
 	                System.err.println("Error sending chatroom removal update to a client!");
 	            }
