@@ -17,7 +17,7 @@ public class Chatroom implements Serializable {
 	//constructor when making a new chatroom, uses a dummy int to differentiate
     public Chatroom(int x, int creatorID)
     {
-        IDCounter += 6;
+        IDCounter += 1;
         id = IDCounter;
 
 
@@ -61,8 +61,6 @@ public class Chatroom implements Serializable {
 		{
 			IDCounter = chatroomID;
 		}
-		
-		System.out.println(chatroomID);
 		
 		String messageFiles = Integer.toString(id) + "Messages.txt";
 		try {

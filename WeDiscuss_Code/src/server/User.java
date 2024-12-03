@@ -43,28 +43,10 @@ public class User implements Serializable{
 			IDCounter = userID;
 		}
 		
-		System.out.println(username+ " "+ password + " " + adminStatus + " " + userID);
 		
 		this.status = false; //Initially offline
 		loadMessageInbox();
 		loadChatrooms();
-		
-		System.out.println("FOR: " + username + "\n");
-		System.out.println("----------------");
-		
-		for (Map.Entry<Integer,List<Message>> mapElement : messagesFromUsers.entrySet()) {
-            int key = mapElement.getKey();
- 
-            // Adding some bonus marks to all the students
-            List<Message> value = (mapElement.getValue());
- 
-            System.out.println(key);
-            System.out.println("\n");
-            for (int i=0; i< value.size(); i++)
-            {
-            	System.out.println(value.get(i));
-            }
-        }
 		
 		
 	}
@@ -363,6 +345,13 @@ public class User implements Serializable{
 	public void addChatroom(int chatroomID) {
 		if (!involvedChatrooms.contains(chatroomID)) {
 			involvedChatrooms.add(chatroomID);
+			saveChatrooms();
+		}
+	}
+	
+	public void removeChatroom(int chatroomID) {
+		if (involvedChatrooms.contains(chatroomID)) {
+			involvedChatrooms.remove(chatroomID);
 			saveChatrooms();
 		}
 	}
