@@ -16,7 +16,7 @@ public class ChatroomTester {
 
     @BeforeEach
     public void setUp() {
-        chatroom = new Chatroom();
+        chatroom = new Chatroom(1, 2);
         message = new Message(new MessageCreator(MessageType.UTU));
     }
     
