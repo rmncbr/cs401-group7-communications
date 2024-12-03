@@ -271,7 +271,6 @@ public class Client {
 		
 		sendMessage(messageCreator.createMessage());
 		
-		user.getChatrooms().remove(chatroomID);
 	}
 	
 	private void sendMessage(Message message) throws IOException {
@@ -386,7 +385,7 @@ public class Client {
 						clientGui.addToMessageQueue(message);
 						break;
 					default:
-						break;
+
 				}	
 			}
 			

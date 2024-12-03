@@ -213,6 +213,7 @@ public class Server {
 						break;
 					case LC:
 							chatroomManager.removeUserfromChatroom(output, message, listOfClients);
+							userManager.getUser(message.getFromUserID()).removeChatroom(message.getToChatroomID());
 						break;
 					case UTU:
 							userManager.sendMessage(output, message, listOfClients);

@@ -43,7 +43,6 @@ public class ChatroomManager {
 					token.add(line.next());
 				}
 				
-				//if there are more or less than 1 token, then it is invalid
 				if (token.size() != 1)
 				{
 					line.close(); //do nothing and skip this iteration
@@ -281,9 +280,14 @@ public class ChatroomManager {
 		    create.setChatroom(receive);
 		    Send = new Message(create);
 		    
+		    System.out.println(message.getToUserID());
 		    
-		    clients.get(message.getToUserID()).writeObject(Send);
+		    if(clients.get(message.getToUserID()) != null) {
+		    	clients.get(message.getToUserID()).writeObject(Send);
+		    	System.out.println("I send");
+		    }
 		    
+		    System.out.println("Done");
 		    return message.getToUserID();
 			
 		}
@@ -416,20 +420,8 @@ public class ChatroomManager {
 			create.setToUserID(message.getToUserID());
 			create.setToChatroom(receive.getChatroomID());
 			
-			clients.keySet().parallelStream().forEach(client ->{
-				try {
-					if(receive.findMember(client)) {
-						clients.get(client).writeObject(message);
-					}
-				}
-				catch(IOException e) {
-					System.err.println("Error sending update to a client!");
-				}
-			});
-			
-			create.setContents("Success");
-			Send = new Message(create);
-		    out.writeObject(Send);
+			out.writeObject(create.createMessage());
+
 		}
 		catch(IOException e)
 		{

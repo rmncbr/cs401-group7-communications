@@ -234,13 +234,13 @@ public class ClientUI extends JFrame {
 					processCreateChatroom(message);
 					break;
 				case IUC:
-//	                    processInviteUserToChatroom(message);
+	                 processInviteUserToChatroom(message);
 					break;
 				case JC:
 					processJoinChatroom(message);
 					break;
 				case LC:
-//	                    processLeaveChatroom(message);
+					processLeaveChatroom(message);
 					break;
 				case UTU:
 					processUserMessage(message); // For private messages
@@ -309,7 +309,39 @@ public class ClientUI extends JFrame {
 			System.out.println("List of Chatrooms Updated!");
 		});
 	}
+	
+	private void processLeaveChatroom(Message message) {
+		SwingUtilities.invokeLater(() -> {
+			if (message.getContents().equals("Remove")) {
+				// Remove chatroom to the map
+				chatrooms.remove(message.getToChatroomID());
 
+				// Remove chatroom to the chatroomsListModel
+				chatroomsListModel.removeElement(message.getToChatroomID());
+			} else {
+				System.out.println("Error Removing chatroom.");
+			}
+			 loadChatrooms();
+			System.out.println("List of Chatrooms Updated!");
+		});
+	}
+	
+	private void processInviteUserToChatroom(Message message) {
+		SwingUtilities.invokeLater(() -> {
+			if (message.getContents().equals("Add")) {
+				// Add chatroom to the map
+				chatrooms.put(message.getChatroom().getChatroomID(), message.getChatroom());
+
+				// Add chatroom to the chatroomsListModel
+				chatroomsListModel.addElement("Chatroom " + message.getToChatroomID());
+			} else {
+				System.out.println("Error adding chatroom.");
+			}
+			 loadChatrooms();
+			System.out.println("List of Chatrooms Updated!");
+		});
+	}
+	
 	private void processJoinChatroom(Message message) {
 
 		// Here we would call a new thread of DisplayChatMessages until the user returns
@@ -554,7 +586,7 @@ public class ClientUI extends JFrame {
 				int leaveChatroomID = Integer.parseInt(chatroomIDText);
 
 				this.client.leaveChatroom(leaveChatroomID);
-
+				
 			} catch (NumberFormatException ex) {
 				System.out.println("Invalid chatroom ID. Please enter a valid number.");
 			} catch (IOException err) {
