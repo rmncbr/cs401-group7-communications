@@ -26,7 +26,7 @@ public class UserManager {
 	//filename
 	private String userFile = "UserFile.txt";
 	
-	boolean modified = false;
+	private boolean modified = false;
 	
 	
 	public UserManager() 
