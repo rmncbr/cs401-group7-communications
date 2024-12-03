@@ -489,4 +489,17 @@ public class ChatroomManager {
 
 		}
 	}
+	
+	public ConcurrentHashMap<Integer, Chatroom> getUserChatrooms(int userID){
+		ConcurrentHashMap<Integer, Chatroom> returnMap = new ConcurrentHashMap<Integer, Chatroom>();
+		
+		for(Chatroom chatroom : chatrooms.values()) {
+			if(chatroom.findMember(userID)) {
+				returnMap.put(chatroom.getChatroomID(), chatroom);
+			}
+		}
+		
+		return returnMap;		
+		
+	}
 }
