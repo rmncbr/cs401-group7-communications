@@ -163,7 +163,8 @@ public class UserManager {
 	            create.setUser(allUsers.get(split[0]));
 	            
 	            create.setUserMap(userIDToUsername);
-	            create.setChatroomMap(chatroomManager.chatrooms);
+	            
+	            create.setChatroomMap(chatroomManager.getUserChatrooms(getUserID(split[0])));
 	            
 	            Send = new Message(create);
 	            out.writeObject(Send);  
