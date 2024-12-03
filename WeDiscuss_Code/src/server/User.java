@@ -320,9 +320,7 @@ public class User implements Serializable{
 	}
 	
 	
-	public ConcurrentHashMap<Integer, List<Message>> getMessagesFromUsers() {
-		return messagesFromUsers;
-	}
+	
 	
 	//Get user's username
 	//return username
@@ -374,6 +372,28 @@ public class User implements Serializable{
 	public void addToInbox(Message message) {
 		this.messageInbox.add(message);
 		
+		int toUserID = message.getToUserID();
+		int fromUserID = message.getFromUserID();
+		if(fromUserID == ID)
+		{
+			//first check if it exists in the map
+			if (!messagesFromUsers.containsKey(toUserID))
+			{
+				messagesFromUsers.put(toUserID, new ArrayList<Message>());
+			}
+			messagesFromUsers.get(toUserID).add(message);
+		}
+		else
+		{
+			//first check if it exists in the map
+			if (!messagesFromUsers.containsKey(fromUserID))
+			{
+				messagesFromUsers.put(fromUserID, new ArrayList<Message>());
+			}
+			messagesFromUsers.get(fromUserID).add(message);
+		}
+		
+		
 		//append the message to the messagesFile
 		String messageFile = Integer.toString(ID) + "Inbox.txt";
 		try
@@ -409,6 +429,11 @@ public class User implements Serializable{
 	//Set the user's online status
 	public void setStatus(boolean status) {
 		this.status = status;
+	}
+	
+	public ConcurrentHashMap<Integer, List<Message>> getMessagesFromUsers()
+	{
+		return this.messagesFromUsers;
 	}
 	
 	

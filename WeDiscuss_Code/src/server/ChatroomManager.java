@@ -136,7 +136,21 @@ public class ChatroomManager {
 			
 			
 			receive.addMessage(message); //give message to chatroom so they can store it
-
+			List<Integer> members = receive.getMembers();
+			
+			for(int i=0; i<members.size(); i++)
+			{
+				if (clients.containsKey(members.get(i)))
+				{
+					ObjectOutputStream outReceiver = clients.get(members.get(i));
+					if(outReceiver != null)
+					{
+						outReceiver.writeObject(message);
+					}
+				}
+			}
+			
+			/*
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
 					if(receive.findMember(client)) {
@@ -148,6 +162,8 @@ public class ChatroomManager {
 					System.err.println("Error sending update to a client!");
 				}
 			});
+			*/
+			
 		}
 		catch(IOException e)
 		{
@@ -252,6 +268,22 @@ public class ChatroomManager {
 			create.setToChatroom(receive.getChatroomID());
 			
 			// Let others know client is joining the chatroom
+			List<Integer> members = receive.getMembers();
+			
+			for(int i=0; i<members.size(); i++)
+			{
+				if (clients.containsKey(members.get(i)))
+				{
+					ObjectOutputStream outReceiver = clients.get(members.get(i));
+					if(outReceiver != null)
+					{
+						outReceiver.writeObject(create.createMessage());
+						outReceiver.flush();
+					}
+				}
+			}
+			
+			
 			clients.keySet().parallelStream().forEach(client ->{
 				try {
 					if(receive.findMember(client) && client != message.getToUserID()) {
