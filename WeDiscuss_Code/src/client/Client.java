@@ -230,12 +230,12 @@ public class Client {
 		sendMessage(messageCreator.createMessage());
 	}
 	
-	public void inviteUserToChatroom(String toUsername, int toUserID) throws IOException{
+	public void inviteUserToChatroom(String toUsername, int toUserID, int chatroomID) throws IOException{
 		MessageCreator messageCreator = new MessageCreator(MessageType.IUC);
 		
 		messageCreator.setToUserName(toUsername);
 		messageCreator.setToUserID(toUserID);
-		
+		messageCreator.setToChatroom(chatroomID);
 		if(user != null) {
 			messageCreator.setFromUserName(user.getUsername());
 			messageCreator.setFromUserID(user.getID());
