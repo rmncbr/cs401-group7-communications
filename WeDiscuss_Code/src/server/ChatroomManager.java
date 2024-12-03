@@ -91,7 +91,7 @@ public class ChatroomManager {
 				
 				//writ information to file
 				myFile.write(Integer.toString(id));
-				myFile.write("\r\n");
+				myFile.write("\n");
 			}
 			modified = false;
 			myFile.close();
