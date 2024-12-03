@@ -336,7 +336,7 @@ public class ChatroomManager {
             }
 
             // Make a new chatroom and add it to the list
-            Chatroom make = new Chatroom(++chatroomCounter, message.getFromUserID());
+            Chatroom make = new Chatroom(0, message.getFromUserID());
             Integer chatId = make.getChatroomID();
             chatroomIDs.add(chatId);
             chatrooms.put(chatId, make);

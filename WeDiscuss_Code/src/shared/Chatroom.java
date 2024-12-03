@@ -14,40 +14,44 @@ public class Chatroom implements Serializable {
 	private List<Integer> members = Collections.synchronizedList(new ArrayList<Integer>());
 	private List<Message> messages = Collections.synchronizedList(new ArrayList<Message>());
 	
-	//constructor when making a new chatroom
-	public Chatroom()
-	{
-		IDCounter += 6;
-		id = IDCounter;
-		
-		
-		String messageFile = Integer.toString(id) + "Messages.txt";
-		try {
+	//constructor when making a new chatroom, uses a dummy int to differentiate
+    public Chatroom(int x, int creatorID)
+    {
+        IDCounter += 6;
+        id = IDCounter;
+
+
+        String messageFile = Integer.toString(id) + "Messages.txt";
+        try {
             File file = new File(messageFile);
 
             if (file.createNewFile()) {
-                
+
             } else {
                 System.out.println("File already exists. CHATROOM ");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-		
-		String membersFile = Integer.toString(id) + "Members.txt";
-		
-		try {
+
+        String membersFile = Integer.toString(id) + "Members.txt";
+
+        try {
             File file = new File(membersFile);
 
             if (file.createNewFile()) {
-                
+
             } else {
                 System.out.println("File already exists. CHATROOM ERROR");
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-	}
+
+        addMember(creatorID);
+
+    }
+
 	
 	//constructor when loading existing chatroom
 	public Chatroom(int chatroomID) {
@@ -101,7 +105,7 @@ public class Chatroom implements Serializable {
 			while (reader.hasNextLine())
 			{
 				//getline and set delimiters
-				Scanner line = new Scanner(reader.nextLine()).useDelimiter("|"); // \\s+ means whitespace
+				Scanner line = new Scanner(reader.nextLine()).useDelimiter("\\|"); // \\s+ means whitespace
 				
 				ArrayList<String> token = new ArrayList<String>();
 				line.tokens();
@@ -178,11 +182,6 @@ public class Chatroom implements Serializable {
 		catch (IOException e) {
         	e.printStackTrace();
         }
-	}
-	
-	public Chatroom(int chatroomID, int creatorID) {
-		this.id = chatroomID;
-		this.members.add(creatorID);
 	}
 	
 	public int getChatroomID() {

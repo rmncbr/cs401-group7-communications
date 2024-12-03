@@ -128,15 +128,14 @@ public class ClientUI extends JFrame {
 
 				// Update chatroom messages list
 				chatroomMessagesModel.clear();
-				System.out.println(chatrooms.size());
 				for (Integer chatroomID : chatrooms.keySet()) {
 					createChatroomMessageArea(chatroomID);
 					List<Message> messages = chatrooms.get(chatroomID).getMessages();
 					if(!(messages == null)) {
-						System.out.println(message.storeChatroomMessage());
 						for(Message m : messages) {
 							createChatroomMessageArea(chatroomID);
 							JTextArea chatroomArea = chatroomMessageAreas.get(chatroomID);
+							appendMessageToCorrectArea(m);
 							if(chatroomArea != null) {
 								chatroomArea.append(m.getFromUserName() + ": " + m.getContents() + "\n");
 							}
