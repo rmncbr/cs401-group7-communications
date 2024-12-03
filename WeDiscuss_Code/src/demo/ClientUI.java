@@ -65,7 +65,7 @@ public class ClientUI extends JFrame {
 	private Map<Integer, JTextArea> chatroomMessageAreas = new HashMap<>();
 
 	public ClientUI() {
-		client = new ConsoleClient(this); // Init Client w/ this GUI
+		//client = new ConsoleClient(this); // Init Client w/ this GUI
 
 		usersListModel = new DefaultListModel<>();
 		chatroomsListModel = new DefaultListModel<>();
