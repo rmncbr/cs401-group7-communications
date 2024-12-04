@@ -3,8 +3,6 @@ package test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import server.User;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Date;
@@ -16,7 +14,6 @@ import shared.*;
 public class MessageTester {
     private MessageCreator creator;
     private Message message;
-    private User testUser;
     private Chatroom testChatroom;
     private ConcurrentMap<Integer, Chatroom> chatroomMap;
     private ConcurrentMap<Integer, String> userMap;
