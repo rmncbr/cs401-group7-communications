@@ -157,7 +157,7 @@ public class Server {
 							if(userID != -1) {
 								 listOfClients.put(userID, output);
 								 clientThreads.put(userID, Thread.currentThread());
-								 sendUserMapUpdates(userID, userManager.getUsername(userID), true);
+								 // sendUserMapUpdates(userID, userManager.getUsername(userID), true);
 							}
 						break;
 					case LOGOUT:
@@ -169,18 +169,21 @@ public class Server {
 							}
 						break;
 					case ADDUSER:
-							userManager.addUser(output, message);
+							int addID = userManager.addUser(output, message);
+							if(addID != -1) {
+								sendUserMapUpdates(addID, userManager.getUsername(addID), true); // Let everyone know User is Added
+							}
 						break;
 					case DELUSER:
-							int delUser = userManager.deleteUser(output, message);
-							if(delUser != -1) {
-								sendUserMapUpdates(delUser, userManager.getUsername(delUser), false); // Let everyone know User is no longer apart of the server
+							User delUser = userManager.deleteUser(output, message);
+							if(delUser != null) {
+								sendUserMapUpdates(delUser.getID(), delUser.getUsername(), false); // Let everyone know User is no longer apart of the server
 								
 						    	// Remove user from all chatrooms they are apart of
-						    	chatroomManager.removeUserFromChatrooms(userManager.getUser(delUser), listOfClients);
+						    	chatroomManager.removeUserFromChatrooms(delUser, listOfClients);
 						    	
 						    	// Stop servicing the client
-								Thread clientThread = clientThreads.get(delUser);
+								Thread clientThread = clientThreads.get(delUser.getID());
 								if(clientThread != null) {
 									clientThread.interrupt();
 								}

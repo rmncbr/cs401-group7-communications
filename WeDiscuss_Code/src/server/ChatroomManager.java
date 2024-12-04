@@ -381,6 +381,7 @@ public class ChatroomManager {
 			
 			create.setContents("Remove");
 			create.setToUserID(message.getToUserID());
+			create.setToUserName(message.getToUserName());
 			create.setToChatroom(message.getToChatroomID());
 			create.setFromUserID(message.getFromUserID());
 			create.setFromUserName(message.getFromUserName());
@@ -400,28 +401,11 @@ public class ChatroomManager {
 	}
 	
 	public void removeUserFromChatrooms(User user, ConcurrentHashMap<Integer, ObjectOutputStream> clients) {
-		Message Send;
-		MessageCreator create;
-		create = new MessageCreator(MessageType.LC);
-		create.setToUserID(user.getID());
-		Send = new Message(create);// have message ready to return a deny
-		
-		
 		for(Integer chatroomID : user.getChatrooms()) {
-			// Remove from data, send to all online clients that user is not apart of chatroom anymore
 			chatrooms.get(chatroomID).removeMember(user.getID());
-			clients.keySet().parallelStream().forEach(client ->{
-				try {
-					if(chatrooms.get(chatroomID).findMember(client) && client != user.getID()) {
-						clients.get(client).writeObject(Send);
-					}
-				}
-				catch(IOException e) {
-					System.err.println("Error sending update to a client!");
-				}
-			});
-
 		}
+
+		
 	}
 	
 	public ConcurrentHashMap<Integer, Chatroom> getUserChatrooms(int userID){
