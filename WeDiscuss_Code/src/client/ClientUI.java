@@ -363,7 +363,6 @@ public class ClientUI extends JFrame {
 	protected void processUserMapUpdate(Message message) {
 		// 
 		SwingUtilities.invokeLater(() -> {
-
 			if (message.getContents().equals("Add")) {
 				userMap.put(message.getFromUserID(), message.getFromUserName());
 				createPrivateMessageArea(message.getFromUserID());
@@ -982,83 +981,57 @@ public class ClientUI extends JFrame {
 	}// showMainApplication()
 
 	private void displayPopulation(int type) {
-	    if (type == 0) {
-	        // Display Users
-	        JDialog usersListDialog = new JDialog(mainFrame, "Users", true);
-	        DefaultListModel<String> usersListModel = new DefaultListModel<>();
+		if (type == 0) {
+			// Display Users
+			JDialog usersListDialog = new JDialog(mainFrame, "Users", true);
+			usersListModel = new DefaultListModel<>();
 
-	        usersListModel.clear();
-	        
-	        // Read data from UserFile.txt
-	        try (BufferedReader br = new BufferedReader(new FileReader("UserFile.txt"))) {
-	            String line;
-	            while ((line = br.readLine()) != null) {
-	                String[] parts = line.split(" ");  // Assuming space as delimiter
-	                
-	                String username = parts[0];
-	                String isAdmin = parts[2];
-	                String userID = parts[3];
-	                
-	                String user = "";
-	                if(isAdmin.equals("true")) {
-	                	user = "* | User ID: " + userID + " | Username: " + username;
-	                	usersListModel.addElement(user);
-	                } else {
-	                user = "User ID: " + userID + " | Username: " + username;
-	                usersListModel.addElement(user);
-	                }
-	            }
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
+			usersListModel.clear();
+			for (Integer userID : userMap.keySet()) {
+				String user = "User ID: " + userID + " | Username: " + userMap.get(userID);
+				usersListModel.addElement(user); // Add to the model
+			}
 
-	        JList<String> usersList = new JList<>(usersListModel);
-	        usersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			JList<String> usersList = new JList<>(usersListModel);
+			usersList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-	        JScrollPane usersScrollPane = new JScrollPane(usersList);
+			JScrollPane usersScrollPane = new JScrollPane(usersList);
 
-	        usersListDialog.setLayout(new BorderLayout());
-	        usersListDialog.add(usersScrollPane, BorderLayout.CENTER);
+			usersListDialog.setLayout(new BorderLayout());
+			usersListDialog.add(usersScrollPane, BorderLayout.CENTER);
 
-	        usersListDialog.setSize(200, 150);
-	        usersListDialog.setLocationRelativeTo(mainFrame);
-	        usersListDialog.setVisible(true);
+			usersListDialog.setSize(200, 150);
+			usersListDialog.setLocationRelativeTo(mainFrame);
+			usersListDialog.setVisible(true);
 
-	        usersListDialog.revalidate();
-	        usersListDialog.repaint();
+			usersListDialog.revalidate();
+			usersListDialog.repaint();
 
-	    } else if (type == 1) {
-	        // Display Chatrooms
-	        JDialog chatroomsListDialog = new JDialog(mainFrame, "Chatrooms", true);
-	        DefaultListModel<String> chatroomsListModel = new DefaultListModel<>();
+		} else if (type == 1) {
+			// Display Chatrooms
+			JDialog chatroomsListDialog = new JDialog(mainFrame, "Chatrooms", true);
+			chatroomsListModel = new DefaultListModel<>();
 
-	        chatroomsListModel.clear();
-	        
-	        try (BufferedReader br = new BufferedReader(new FileReader("ChatroomFile.txt"))) {
-	            String line;
-	            while ((line = br.readLine()) != null) {
-	                int chatroomID = Integer.parseInt(line.trim());
-	                chatroomsListModel.addElement("Chatroom " + chatroomID);
-	            }
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	        }
+			chatroomsListModel.clear();
+			for (Integer chatroomID : chatrooms.keySet()) {
+				chatroomsListModel.addElement("Chatroom " + chatroomID);
+			}
 
-	        JList<String> chatroomsList = new JList<>(chatroomsListModel);
-	        chatroomsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			JList<String> chatroomsList = new JList<>(chatroomsListModel);
+			chatroomsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-	        JScrollPane chatroomsScrollPane = new JScrollPane(chatroomsList);
+			JScrollPane chatroomsScrollPane = new JScrollPane(chatroomsList);
 
-	        chatroomsListDialog.setLayout(new BorderLayout());
-	        chatroomsListDialog.add(chatroomsScrollPane, BorderLayout.CENTER);
+			chatroomsListDialog.setLayout(new BorderLayout());
+			chatroomsListDialog.add(chatroomsScrollPane, BorderLayout.CENTER);
 
-	        chatroomsListDialog.setSize(200, 150);
-	        chatroomsListDialog.setLocationRelativeTo(mainFrame);
-	        chatroomsListDialog.setVisible(true);
+			chatroomsListDialog.setSize(200, 150);
+			chatroomsListDialog.setLocationRelativeTo(mainFrame);
+			chatroomsListDialog.setVisible(true);
 
-	        chatroomsListDialog.revalidate();
-	        chatroomsListDialog.repaint();
-	    }
+			chatroomsListDialog.revalidate();
+			chatroomsListDialog.repaint();
+		}
 	}// displayPopulation()
 
 	protected void showInputDialog(String dialogTitle, String labelText, JComponent inputField,
