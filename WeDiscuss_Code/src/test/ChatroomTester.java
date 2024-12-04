@@ -16,7 +16,7 @@ public class ChatroomTester {
 
     @BeforeEach
     public void setUp() {
-        chatroom = new Chatroom(1, 2);
+        chatroom = new Chatroom(100);
         message = new Message(new MessageCreator(MessageType.UTU));
     }
     
@@ -109,32 +109,7 @@ public class ChatroomTester {
     }
     
     
-    @Test
-    public void testChatroomConstructorWithUserID() {
-        int chatroomID = 100;
-        int creatorID = 1;
-        Chatroom newChatroom = new Chatroom(chatroomID, creatorID);
-
-        assertEquals(chatroomID, newChatroom.getChatroomID());
-        assertTrue(newChatroom.findMember(creatorID));
-
-        // Verify members file exists and contains creatorID
-        String membersFileName = chatroomID + "Members.txt";
-        java.io.File membersFile = new java.io.File(membersFileName);
-        assertTrue(membersFile.exists(), "Members file should exist after chatroom creation");
-
-        try (java.util.Scanner scanner = new java.util.Scanner(membersFile)) {
-            assertTrue(scanner.hasNextLine(), "Members file should contain the creator ID");
-            assertEquals(Integer.toString(creatorID), scanner.nextLine());
-        } catch (Exception e) {
-            fail("Exception while reading members file: " + e.getMessage());
-        }
-
-        // Clean up test files specific to this test
-        membersFile.delete();
-        new java.io.File(chatroomID + "Messages.txt").delete();
-    }
-    
+   
 
     
 }
