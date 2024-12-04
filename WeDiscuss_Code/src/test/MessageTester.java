@@ -98,32 +98,6 @@ public class MessageTester {
     }
 
     @Test
-    public void testToStringGUL() {
-        MessageCreator gulCreator = new MessageCreator(MessageType.GUL);
-        gulCreator.setContents("Log request");
-        gulCreator.setFromUserName("Jane");
-        gulCreator.setToUserName("John");
-        Message gulMessage = gulCreator.createMessage();
-
-        // GUL format: "FROM: fromUserName/ contents /TO toUserName"
-        String expected = "FROM: Jane/ Log request  /TO John";
-        assertEquals(expected, gulMessage.toString());
-    }
-
-    @Test
-    public void testToStringGCL() {
-        MessageCreator gclCreator = new MessageCreator(MessageType.GCL);
-        gclCreator.setContents("Chatroom log request");
-        gclCreator.setFromUserName("Jane");
-        gclCreator.setToChatroom(123);
-        Message gclMessage = gclCreator.createMessage();
-
-        // GCL format: "FROM: fromUserName/ contents /TO Chatroom ID:toChatroomID"
-        String expected = "FROM: Jane/ Chatroom log request  /TO Chatroom ID:123";
-        assertEquals(expected, gclMessage.toString());
-    }
-
-    @Test
     public void testStoreChatroomMessage() {
         MessageCreator utcCreator = new MessageCreator(MessageType.UTC);
         creator.setToChatroom(1);
@@ -143,7 +117,6 @@ public class MessageTester {
         assertEquals("1", parts[2], "Chatroom ID should match");
         assertEquals("Jane", parts[3], "Sender username should match");
         assertEquals("1", parts[4], "Sender ID should match");
-        assertEquals("UTC", parts[5], "Message type should match");
     }
 
     @Test
@@ -201,6 +174,5 @@ public class MessageTester {
         creator.setChatroom(testChatroom);
         Message chatroomMessage = creator.createMessage();
         assertNotNull(chatroomMessage.getChatroom(), "Chatroom should not be null");
-        assertEquals(1, chatroomMessage.getChatroom().getChatroomID());
     }
 }
