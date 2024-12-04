@@ -359,5 +359,14 @@ public class LogManager {
 			
 		}
 	}
+	
+	// Added for testing purposes
+	public static ConcurrentHashMap<Integer, List<Message>> getUserMessageLogs() {
+		return userMessageLogs;
+	}
+	
+	public static ConcurrentHashMap<Integer, List<Message>> getChatroomMessageLogs() {
+		return chatroomMessageLogs;
+	}
 
 }
