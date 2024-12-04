@@ -1,7 +1,5 @@
 package client;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -55,14 +53,15 @@ public class ClientUI extends JFrame {
 	private DefaultListModel<Message> chatroomMessagesModel = new DefaultListModel<>();
 	private JList<Message> privateMessagesList = new JList<>(privateMessagesModel);
 	private JList<Message> chatroomMessagesList = new JList<>(chatroomMessagesModel);
-
-	// logs
-	DefaultListModel<String> userLogModel;
-	DefaultListModel<String> chatroomLogModel;
-
+	
+	//logs
+    DefaultListModel<String> userLogModel;
+    DefaultListModel<String> chatroomLogModel;
+	
 	DefaultListModel<String> usersListModel;
 	DefaultListModel<String> chatroomsListModel;
-
+	
+	
 	private int activeTabIndex = 0; // 0: "Private Messages", 1: "Chatrooms"
 	// messaging display area
 	private JPanel msgAreaPanel;
@@ -74,12 +73,12 @@ public class ClientUI extends JFrame {
 
 	public ClientUI() {
 		client = new Client(this); // Init Client w/ this GUI
-
+		
 		usersListModel = new DefaultListModel<>();
 		chatroomsListModel = new DefaultListModel<>();
 		privateMessagesModel = new DefaultListModel<>();
 		chatroomMessagesModel = new DefaultListModel<>();
-
+		
 		mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		mainFrame.setSize(575, 400);
 		mainFrame.setVisible(false);
@@ -170,7 +169,7 @@ public class ClientUI extends JFrame {
 
 		serverResponse.countDown();
 	}
-
+	
 	private void loadChatrooms() {
 		SwingUtilities.invokeLater(() -> {
 			chatroomMessagesModel.clear();
@@ -185,9 +184,9 @@ public class ClientUI extends JFrame {
 			}
 
 			// Set the models for both private and chatroom messages
-
+			
 			chatroomMessagesList.setModel(chatroomMessagesModel);
-
+			
 			chatroomMessagesList.setCellRenderer(new MessageListCellRenderer());
 		});
 	}
@@ -222,7 +221,9 @@ public class ClientUI extends JFrame {
 				case DELUSER:
 					processDelUser(message);
 					break;
-
+				case CPWD:
+					processChangePassword(message);
+					break;
 				case GUL:
 					processGetUserLogs(message);
 					break;
@@ -233,7 +234,7 @@ public class ClientUI extends JFrame {
 					processCreateChatroom(message);
 					break;
 				case IUC:
-					processInviteUserToChatroom(message);
+	                 processInviteUserToChatroom(message);
 					break;
 				case JC:
 					processJoinChatroom(message);
@@ -248,10 +249,10 @@ public class ClientUI extends JFrame {
 					processChatroomMessage(message); // For chatroom messages
 					break;
 				case UPDATEUM:
-					processUserMapUpdate(message);
+                    processUserMapUpdate(message);
 					break;
 				case UPDATECM:
-					// processChatroomMapUpdate(message);
+					// Handle chatroom map updates
 					break;
 				default:
 					break;
@@ -281,16 +282,16 @@ public class ClientUI extends JFrame {
 
 	private void processUserMessage(Message message) {
 		// This function handles private messages (UTU)
-
-		appendMessageToCorrectArea(message);
-
+		
+			appendMessageToCorrectArea(message);
+		
 	}
 
 	private void processChatroomMessage(Message message) {
 		// This function handles chatroom messages (UTC)
-
-		appendMessageToCorrectArea(message);
-
+		
+			appendMessageToCorrectArea(message);
+		
 	}
 
 	private void processCreateChatroom(Message message) {
@@ -304,11 +305,11 @@ public class ClientUI extends JFrame {
 			} else {
 				System.out.println("Error creating chatroom.");
 			}
-			loadChatrooms();
+			 loadChatrooms();
 			System.out.println("List of Chatrooms Updated!");
 		});
 	}
-
+	
 	private void processLeaveChatroom(Message message) {
 		SwingUtilities.invokeLater(() -> {
 			if (message.getContents().equals("Remove")) {
@@ -320,11 +321,11 @@ public class ClientUI extends JFrame {
 			} else {
 				System.out.println("Error Removing chatroom.");
 			}
-			loadChatrooms();
+			 loadChatrooms();
 			System.out.println("List of Chatrooms Updated!");
 		});
 	}
-
+	
 	private void processInviteUserToChatroom(Message message) {
 		SwingUtilities.invokeLater(() -> {
 			if (message.getContents().equals("Add")) {
@@ -336,11 +337,11 @@ public class ClientUI extends JFrame {
 			} else {
 				System.out.println("Error adding chatroom.");
 			}
-			loadChatrooms();
+			 loadChatrooms();
 			System.out.println("List of Chatrooms Updated!");
 		});
 	}
-
+	
 	private void processJoinChatroom(Message message) {
 		SwingUtilities.invokeLater(() -> {
 			if (message.getContents().equals("Success")) {
@@ -352,22 +353,21 @@ public class ClientUI extends JFrame {
 			} else {
 				System.out.println("Error joining chatroom.");
 			}
-			loadChatrooms();
+			 loadChatrooms();
 			System.out.println("List of Chatrooms Updated!");
 		});
-
+		
 	}
 
 	/* admin processing */
 	
 	protected void processUserMapUpdate(Message message) {
-		// 
 		SwingUtilities.invokeLater(() -> {
-			if (message.getContents().equals("Add")) {
+			
+			if(message.getContents().equals("Add")) {
 				userMap.put(message.getFromUserID(), message.getFromUserName());
-				createPrivateMessageArea(message.getFromUserID());
-				JTextArea privateArea = privateMessageAreas.get(message.getFromUserID());
-				
+				createPrivateMessageArea(message.getFromUserID()); // Create if not exists
+				JTextArea privateArea = privateMessageAreas.get(message.getFromUserID());;
 				MessageCreator pm = new MessageCreator(MessageType.LOGIN);
 				pm.setFromUserID(message.getFromUserID());
 				pm.setFromUserName(userMap.get(message.getFromUserID()));
@@ -375,9 +375,9 @@ public class ClientUI extends JFrame {
 				privateMessagesModel.addElement(privateMessage);
 				privateMessagesList.setModel(privateMessagesModel);
 				privateMessagesList.setCellRenderer(new MessageListCellRenderer());
+			}
+			else if(message.getContents().equals("Remove")) {
 				
-			} else if (message.getContents().equals("Remove")) {
-
 				userMap.remove(message.getFromUserID(), message.getFromUserName());
                 // Update private messages list
                 privateMessagesModel.clear();
@@ -397,110 +397,98 @@ public class ClientUI extends JFrame {
 		});
 	}
 	
-	private void processChatroomMapUpdate(Message message) {
-		SwingUtilities.invokeLater(() -> {
-			if (message.getContents().equals("Add")) {
-				chatrooms.put(message.getToChatroomID(), message.getChatroom());
-
-//				chatroomsListModel.addElement("Chatroom " + message.getToChatroomID());
-			} else {
-				chatrooms.remove(message.getToChatroomID());
-				for (int i = 0; i < chatroomsListModel.getSize(); i++) {
-					String chatroom = chatroomsListModel.getElementAt(i);
-					if (chatroom.contains("Chatroom " + message.getToChatroomID())) {
-						chatroomsListModel.removeElementAt(i);
-						break;
-					}
-				}
-			}
-			System.out.println("List of Chatrooms Updated!");
-		});
-	}
-
 	protected void processAddUser(Message message) {
-		SwingUtilities.invokeLater(() -> {
 
-		});
 	}
 
 	protected void processDelUser(Message message) {
-		SwingUtilities.invokeLater(() -> {
 
-		});
 	}
 
+	protected void processChangePassword(Message message) {
+
+	}
+	
 	protected void processGetUserLogs(Message message) {
 		if (true) {
-			SwingUtilities.invokeLater(() -> {
-				// display dialog of user logs
+            SwingUtilities.invokeLater(() -> {
+            // display dialog of user logs
 
-				JDialog userLogDialog = new JDialog(mainFrame, "Users", true);
-				userLogModel = new DefaultListModel<>();
+            JDialog userLogDialog = new JDialog(mainFrame, "Users", true);
+            userLogModel = new DefaultListModel<>();
+            
+            
+            String userLog = message.getContents();
+            String[] split = userLog.split("\\|");
+            
+            
+            userLogModel.clear();
+            for (String log : split) {
+                userLogModel.addElement(log); // Add to the model
+                System.out.println("Added A Log!");
+            }
+            
+            
+            
+            JList<String> userLogList = new JList<>(userLogModel);
+            userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-				String userLog = message.getContents();
-				String[] split = userLog.split("\\|");
+            JScrollPane usersScrollPane = new JScrollPane(userLogList);
 
-				userLogModel.clear();
-				for (String log : split) {
-					userLogModel.addElement(log); // Add to the model
-					System.out.println("Added A Log!");
-				}
+            userLogDialog.setLayout(new BorderLayout());
+            userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
 
-				JList<String> userLogList = new JList<>(userLogModel);
-				userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-				JScrollPane usersScrollPane = new JScrollPane(userLogList);
-
-				userLogDialog.setLayout(new BorderLayout());
-				userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
-
-				userLogDialog.setSize(200, 150);
-				userLogDialog.setLocationRelativeTo(mainFrame);
-				userLogDialog.setVisible(true);
+            userLogDialog.setSize(200, 150);
+            userLogDialog.setLocationRelativeTo(mainFrame);
+            userLogDialog.setVisible(true);
 //
-				userLogDialog.revalidate();
-				userLogDialog.repaint();
-			});
-		} else {
-			System.out.println("Error obtaining user log.");
-		}
+            userLogDialog.revalidate();
+            userLogDialog.repaint();
+            });
+        } else {
+            System.out.println("Error obtaining user log.");
+        }
 	}
 
 	protected void processGetChatroomLogs(Message message) {
 		if (true) {
-			SwingUtilities.invokeLater(() -> {
-				// display dialog of user logs
+            SwingUtilities.invokeLater(() -> {
+            // display dialog of user logs
 
-				JDialog userLogDialog = new JDialog(mainFrame, "Chatroom", true);
-				userLogModel = new DefaultListModel<>();
+            JDialog userLogDialog = new JDialog(mainFrame, "Chatroom" , true);
+            userLogModel = new DefaultListModel<>();
+            
+            
+            String userLog = message.getContents();
+            String[] split = userLog.split("\\|");
+            
+            
+            userLogModel.clear();
+            for (String log : split) {
+                userLogModel.addElement(log); // Add to the model
+                System.out.println("Added A Log!");
+            }
+            
+            
+            
+            JList<String> userLogList = new JList<>(userLogModel);
+            userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-				String userLog = message.getContents();
-				String[] split = userLog.split("\\|");
+            JScrollPane usersScrollPane = new JScrollPane(userLogList);
 
-				userLogModel.clear();
-				for (String log : split) {
-					userLogModel.addElement(log); // Add to the model
-					System.out.println("Added A Log!");
-				}
+            userLogDialog.setLayout(new BorderLayout());
+            userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
 
-				JList<String> userLogList = new JList<>(userLogModel);
-				userLogList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-				JScrollPane usersScrollPane = new JScrollPane(userLogList);
-
-				userLogDialog.setLayout(new BorderLayout());
-				userLogDialog.add(usersScrollPane, BorderLayout.CENTER);
-
-				userLogDialog.setSize(200, 150);
-				userLogDialog.setLocationRelativeTo(mainFrame);
-				userLogDialog.setVisible(true);
+            userLogDialog.setSize(200, 150);
+            userLogDialog.setLocationRelativeTo(mainFrame);
+            userLogDialog.setVisible(true);
 //
-				userLogDialog.revalidate();
-				userLogDialog.repaint();
-			});
-		} else {
-			System.out.println("Error obtaining user log.");
-		}
+            userLogDialog.revalidate();
+            userLogDialog.repaint();
+            });
+        } else {
+            System.out.println("Error obtaining user log.");
+        }
 	}
 
 	/* Do-Functions */
@@ -646,7 +634,7 @@ public class ClientUI extends JFrame {
 				int leaveChatroomID = Integer.parseInt(chatroomIDText);
 
 				this.client.leaveChatroom(leaveChatroomID);
-
+				
 			} catch (NumberFormatException ex) {
 				System.out.println("Invalid chatroom ID. Please enter a valid number.");
 			} catch (IOException err) {
@@ -807,25 +795,13 @@ public class ClientUI extends JFrame {
 			peopleMenu = new JMenu("People");
 			// Add items to the menu bar
 			addUserMenuItems();
-
 			menuBar.add(userMenu);
 			menuBar.add(peopleMenu);
 			if (user != null && user.getAdminStatus() == true) {
 				addAdminMenu(mainFrame);
 			}
+			mainFrame.setJMenuBar(menuBar);
 		}
-
-		// Create a custom panel for the username item (non-clickable)
-		JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-		rightPanel.setOpaque(false);
-		JLabel usernameLabel = new JLabel(user.getUsername());
-		rightPanel.add(usernameLabel); // Add the label to the panel
-
-		// Add the custom panel to the menu bar
-		menuBar.add(Box.createHorizontalGlue()); // This will push the panel to the right
-		menuBar.add(rightPanel); // Add the panel with the username to the menu bar
-
-		mainFrame.setJMenuBar(menuBar);
 
 		// Initialize message models and lists
 		privateMessagesModel = new DefaultListModel<>();
@@ -985,7 +961,7 @@ public class ClientUI extends JFrame {
 		if (type == 0) {
 			// Display Users
 			JDialog usersListDialog = new JDialog(mainFrame, "Users", true);
-			usersListModel = new DefaultListModel<>();
+			DefaultListModel<String> usersListModel = new DefaultListModel<>();
 
 			usersListModel.clear();
 			for (Integer userID : userMap.keySet()) {
@@ -1011,7 +987,7 @@ public class ClientUI extends JFrame {
 		} else if (type == 1) {
 			// Display Chatrooms
 			JDialog chatroomsListDialog = new JDialog(mainFrame, "Chatrooms", true);
-			chatroomsListModel = new DefaultListModel<>();
+			DefaultListModel<String> chatroomsListModel = new DefaultListModel<>();
 
 			chatroomsListModel.clear();
 			for (Integer chatroomID : chatrooms.keySet()) {
@@ -1143,7 +1119,7 @@ public class ClientUI extends JFrame {
 		JLabel thirdLabel = new JLabel(label3);
 		inputPanel.add(thirdLabel);
 		inputPanel.add(input3);
-
+		
 		JButton submitButton = new JButton("Submit");
 		inputPanel.add(submitButton);
 
@@ -1166,40 +1142,6 @@ public class ClientUI extends JFrame {
 
 		dialog.setVisible(true);
 	} // showTripleInputDialog
-
-	// Utility to add menu items to the menu bar
-	private void addUserMenuItems() {
-		JMenuItem createChatroomItem = new JMenuItem("Create Chatroom");
-		createChatroomItem.addActionListener(e -> doCreateChatroom());
-
-		JMenuItem joinChatroomItem = new JMenuItem("Join Chatroom");
-		joinChatroomItem.addActionListener(e -> doJoinChatroom());
-
-		JMenuItem inviteUserToChatroomItem = new JMenuItem("Invite User to Chatroom");
-		inviteUserToChatroomItem.addActionListener(e -> doInviteUserToChatroom());
-
-		JMenuItem leaveChatroomItem = new JMenuItem("Leave Chatroom");
-		leaveChatroomItem.addActionListener(e -> doLeaveChatroom());
-
-		JMenuItem displayUsersItem = new JMenuItem("Display Users");
-		displayUsersItem.addActionListener(e -> displayPopulation(0));
-
-		JMenuItem displayChatroomsItem = new JMenuItem("Display Chatrooms");
-		displayChatroomsItem.addActionListener(e -> displayPopulation(1));
-
-		JMenuItem logoutItem = new JMenuItem("Logout");
-		logoutItem.addActionListener(e -> doSendLogoutRequest());
-
-		userMenu.add(createChatroomItem);
-		userMenu.add(joinChatroomItem);
-		userMenu.add(inviteUserToChatroomItem);
-		userMenu.add(leaveChatroomItem);
-		userMenu.addSeparator();
-		userMenu.add(logoutItem);
-
-		peopleMenu.add(displayUsersItem);
-		peopleMenu.add(displayChatroomsItem);
-	}// addUserMenuItems()
 
 	private void addAdminMenu(JFrame mainFrame) {
 		adminMenu = new JMenu("Admin Tools");
@@ -1312,6 +1254,44 @@ public class ClientUI extends JFrame {
 			inputTextArea.setText("");
 		}
 	}// sendMessageBox()
+
+	// Utility to add menu items to the menu bar
+	private void addUserMenuItems() {
+		JMenuItem createChatroomItem = new JMenuItem("Create Chatroom");
+		createChatroomItem.addActionListener(e -> doCreateChatroom());
+
+		JMenuItem joinChatroomItem = new JMenuItem("Join Chatroom");
+		joinChatroomItem.addActionListener(e -> doJoinChatroom());
+
+		JMenuItem inviteUserToChatroomItem = new JMenuItem("Invite User to Chatroom");
+		inviteUserToChatroomItem.addActionListener(e -> doInviteUserToChatroom());
+
+		JMenuItem leaveChatroomItem = new JMenuItem("Leave Chatroom");
+		leaveChatroomItem.addActionListener(e -> doLeaveChatroom());
+
+		JMenuItem displayUsersItem = new JMenuItem("Display Users");
+		displayUsersItem.addActionListener(e -> displayPopulation(0));
+
+		JMenuItem displayChatroomsItem = new JMenuItem("Display Chatrooms");
+		displayChatroomsItem.addActionListener(e -> displayPopulation(1));
+
+		JMenuItem changePasswordItem = new JMenuItem("Change Password");
+		changePasswordItem.addActionListener(e -> doSendPasswordChangeRequest());
+
+		JMenuItem logoutItem = new JMenuItem("Logout");
+		logoutItem.addActionListener(e -> doSendLogoutRequest());
+
+		userMenu.add(createChatroomItem);
+		userMenu.add(joinChatroomItem);
+		userMenu.add(inviteUserToChatroomItem);
+		userMenu.add(leaveChatroomItem);
+		userMenu.addSeparator();
+		userMenu.add(changePasswordItem);
+		userMenu.add(logoutItem);
+
+		peopleMenu.add(displayUsersItem);
+		peopleMenu.add(displayChatroomsItem);
+	}// addUserMenuItems()
 
 	// Utility to create a JTextArea for messages
 	private JTextArea createMsgInfoArea() {

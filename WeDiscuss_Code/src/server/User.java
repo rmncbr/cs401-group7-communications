@@ -50,7 +50,7 @@ public class User implements Serializable{
 		
 		
 	}
-	
+	//
 	//Constructor when making new account
 		public User(String username, String password, boolean adminStatus) {
 			this.username = username;
