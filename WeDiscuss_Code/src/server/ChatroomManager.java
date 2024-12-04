@@ -290,8 +290,10 @@ public class ChatroomManager {
             Send = new Message(create); // create success message
             out.writeObject(Send); // send success message
 
+            /*
             // Now call sendChatroomUpdates to notify Server of the new chatroom
             server.sendChatroomUpdates(chatId, true); // true means we're adding the chatroom
+            */
 
         } catch (IOException e) {
             e.printStackTrace();
