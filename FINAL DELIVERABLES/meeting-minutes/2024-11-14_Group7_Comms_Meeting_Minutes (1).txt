@@ -1,0 +1,35 @@
+### Meeting Minutes (online)
+
+Date: November 14, 2024
+
+Attendees: Joseph, Marcos, Roman, Isaiah
+
+Agenda:
+
+1. Discuss implementation progress thus far.
+2. UserManager questions 
+3. LogManager questions 
+
+Discussion Points:
+
+- - UserManager.authUser() accepts Socket and returns Message object back to client
+- - UserManager userList no need because of UserID attributes
+- - text file associated for each user
+- - Server message queue
+
+Decisions Made:
+
+- userList deleted
+- new user creation: username, password, admin?, userID
+- Queue of messages in Server to orderly respond to Clients
+
+### Action Items:
+
+1. A001: 
+    - Assigned to:
+    - Due Date: xx, 2024
+    - Details:
+2. A002: 
+    - Assigned to:
+    - Due Date: xx, 2024
+    - Details:
