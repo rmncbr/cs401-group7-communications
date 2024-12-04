@@ -178,7 +178,7 @@ public class Server {
 							User delUser = userManager.deleteUser(output, message);
 							if(delUser != null) {
 								sendUserMapUpdates(delUser.getID(), delUser.getUsername(), false); // Let everyone know User is no longer apart of the server
-								
+								System.out.println("Ending User: " + delUser.getUsername());
 						    	// Remove user from all chatrooms they are apart of
 						    	chatroomManager.removeUserFromChatrooms(delUser, listOfClients);
 						    	
@@ -272,6 +272,7 @@ public class Server {
 			listOfClients.values().parallelStream().forEach(output ->{
 				try {
 					output.writeObject(messageCreator.createMessage());
+					//output.flush();
 				}
 				catch(IOException e) {
 					System.err.println("Error sending update to a client!");
@@ -326,7 +327,6 @@ public class Server {
 			if(clientSocket != null) clientSocket.close();
 			if(input != null) input.close();
 			if(output != null) output.close();
-			sendUserMapUpdates(userID, userManager.getUsername(userID), false);
 		}
 		catch(IOException e) {
 			System.err.println("Error closing resources!");
