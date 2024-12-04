@@ -4,25 +4,30 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import server.User;
+import server.UserManager;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
-public class UserManagerTest {
+public class UserManagerTester {
     private UserManager userManager;
     private List<File> testFiles;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         userManager = new UserManager();
         testFiles = new ArrayList<>();
     }
 
     @AfterEach
-    void cleanup() {
+    public void cleanup() {
         // Clean up any test files created during initialization
         cleanupUserFiles();
 
@@ -51,7 +56,7 @@ public class UserManagerTest {
     }
 
     @Test
-    void testGetUsername() {
+    public void testGetUsername() {
         // Testing existing username lookup
         String username = userManager.getUsername(1);
         assertNotNull(username, "Username should be returned for valid ID");
@@ -61,7 +66,7 @@ public class UserManagerTest {
     }
 
     @Test
-    void testGetUserID() {
+    public void testGetUserID() {
         // Get first user's ID (should exist after initialization)
         int id = userManager.getUserID(userManager.getUsername(1));
         assertTrue(id > 0, "Should return positive ID for existing user");
@@ -72,7 +77,7 @@ public class UserManagerTest {
     }
 
     @Test
-    void testGetAllUserIDs() {
+    public void testGetAllUserIDs() {
         List<Integer> userIDs = userManager.getAllUserIDs();
         assertTrue(userIDs.contains(1));
         assertTrue(userIDs.contains(2));
@@ -83,7 +88,7 @@ public class UserManagerTest {
     }
 
     @Test
-    void testGetUser() {
+    public void testGetUser() {
         // Get first user (should exist after initialization)
         String firstUsername = userManager.getUsername(1);
         User user = userManager.getUser(1);
@@ -97,7 +102,7 @@ public class UserManagerTest {
     }
 
     @Test
-    void testAddChatroomToUser() {
+    public void testAddChatroomToUser() {
         // Get an existing user
         User user = userManager.getUser(1);
         assertNotNull(user, "Test user should exist");
@@ -122,21 +127,32 @@ public class UserManagerTest {
     }
 
     @Test
-    void testSaveUsers(@TempDir Path tempDir) {
-        // Initial state - modified should be false
-        assertFalse(userManager.modified, "Modified flag should be false initially");
+    public void testSaveUsers(@TempDir Path tempDir) {
+    	// Get initial state
+        User initialUser = userManager.getUser(1);
+        List<Integer> initialChatrooms = new ArrayList<>(initialUser.getChatrooms());
 
         // Make a modification (add a chatroom)
-        userManager.addChatroomToUser(1, 100);
-        assertTrue(userManager.modified, "Modified flag should be true after modification");
+        int newChatroomId = 100;
+        userManager.addChatroomToUser(1, newChatroomId);
 
         // Save users
         userManager.saveUsers();
-        assertFalse(userManager.modified, "Modified flag should be false after saving");
 
-        // Verify file was created
-        assertTrue(tempDir.resolve("UserFile.txt").toFile().exists(),
-            "User file should be created after saving");
+        // Create a new UserManager instance to load from file
+        UserManager newUserManager = new UserManager();
+        User loadedUser = newUserManager.getUser(1);
+
+        // Verify the changes were persisted
+        assertNotNull(loadedUser, "User should be loaded from file");
+        assertTrue(loadedUser.getChatrooms().contains(newChatroomId), 
+                  "New chatroom should be present after loading from file");
+        assertEquals(initialChatrooms.size() + 1, loadedUser.getChatrooms().size(),
+                  "Chatroom count should reflect the addition");
+
+        // Verify file exists
+        File userFile = new File("UserFile.txt");
+        assertTrue(userFile.exists(), "User file should exist after saving");
     }
 
     @Test
