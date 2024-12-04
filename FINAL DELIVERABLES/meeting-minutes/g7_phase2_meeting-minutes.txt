@@ -1,0 +1,79 @@
+### Meeting Minutes 1
+
+Date: October 15, 2024 (12:30pm - 1pm)
+
+Attendees: Joseph, Marcos, Roman, Salvador, Isaiah
+
+Agenda:
+
+1. Discuss changes to Client, User, and Message classes.
+
+Discussion Points:
+
+- Should User class contain list of already contacted users?
+- How chatroom functionality is handled.
+- Remove Admin class? Dual User constructors for both Admin and regular users.
+- Server GUI? - Prospective
+- Title of project changed to WeDiscuss.
+
+Decisions Made:
+
+- Within Message class, include Message Type - from int to enum (for readability) Ex: User message → User type, User message → Chatroom type.
+- Chatroom contains list of Users to reference contacts for message deliveries.
+- Remove Admin class and let Admin permissions be set by boolean flag within the User class.
+- Add GUI classes; Baseline GUI for Users, trailing GUI for Admins.
+- Message object is formatted for specific delivery; constructors specify destination and purpose within the system.
+
+### Action Items:
+
+1. A001: UserManager & ChatroomManager
+    - Assigned to: Marcos
+    - Due Date: October 24, 2024
+    - Details: User and Chatroom Management. User and Chatroom list instantiation / deletion, etc.
+2. A002: Client & Server
+    - Assigned to: TBD
+    - Due Date: October 24, 2024
+    - Details: Sockets / Server Sockets, Responses, List of Clients, etc.
+3. A003: Chatroom, LogManager, Message
+    - Assigned to: TBD
+    - Due Date: October 24, 2024
+    - Details: List of Users (Chatroom), Log list (LogManager), and constructors (Message).
+4. A004: Client GUI, Admin GUI
+    - Assigned to: TBD
+    - Due Date: October 24, 2024
+    - Details: Base client GUI, extra functionality for Admin GUI.
+
+
+### Meeting Minutes 2
+
+Date: October 29, 2024
+
+Attendees: Joseph, Marcos, Roman, Salvador, Isaiah
+
+Agenda:
+
+1. Review phase 2 progress
+2. Review UML diagrams 
+
+Discussion Points:
+
+- User to User synchronous message delivery
+- Users can freely change their passwords without verification from an Admin
+- Who is able to delete chatrooms?
+
+Decisions Made:
+
+- A chatroom must first be made by a User to communicate synchronously, even if it is User to User
+- Users can freely change their passwords without verification from an Admin
+- Administrators solely delete chatrooms, logs remain unchanged.
+
+### Action Items:
+
+1. A001: Sequence Diagrams
+    - Assigned to: Marcos
+    - Due Date: October 31, 2024
+    - Details: Make changes from previous sequence diagram.
+2. A002: Phase 2 Presentation Slides
+    - Assigned to: All members
+    - Due Date: October 31, 2024
+    - Details: Demonstrate design document
