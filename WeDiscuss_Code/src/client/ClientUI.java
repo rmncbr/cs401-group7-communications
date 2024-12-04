@@ -795,13 +795,25 @@ public class ClientUI extends JFrame {
 			peopleMenu = new JMenu("People");
 			// Add items to the menu bar
 			addUserMenuItems();
+
 			menuBar.add(userMenu);
 			menuBar.add(peopleMenu);
 			if (user != null && user.getAdminStatus() == true) {
 				addAdminMenu(mainFrame);
 			}
-			mainFrame.setJMenuBar(menuBar);
 		}
+		
+		// username label 
+		JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+		rightPanel.setOpaque(false);
+		JLabel usernameLabel = new JLabel(user.getUsername());
+		rightPanel.add(usernameLabel); // Add the label to the panel
+
+		// Add the custom panel to the menu bar
+		menuBar.add(Box.createHorizontalGlue()); // This will push the panel to the right
+		menuBar.add(rightPanel); // Add the panel with the username to the menu bar
+
+		mainFrame.setJMenuBar(menuBar);
 
 		// Initialize message models and lists
 		privateMessagesModel = new DefaultListModel<>();
