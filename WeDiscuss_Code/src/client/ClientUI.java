@@ -249,7 +249,7 @@ public class ClientUI extends JFrame {
 					processChatroomMessage(message); // For chatroom messages
 					break;
 				case UPDATEUM:
-//	                    processUserMapUpdate(message);
+                    processUserMapUpdate(message);
 					break;
 				case UPDATECM:
 					// Handle chatroom map updates
@@ -360,6 +360,37 @@ public class ClientUI extends JFrame {
 	}
 
 	/* admin processing */
+	
+	protected void processUserMapUpdate(Message message) {
+		SwingUtilities.invokeLater(() -> {
+			
+			if(message.getContents().equals("Add")) {
+				userMap.put(message.getFromUserID(), message.getFromUserName());
+				createPrivateMessageArea(message.getFromUserID()); // Create if not exists
+				JTextArea privateArea = privateMessageAreas.get(message.getFromUserID());;
+				MessageCreator pm = new MessageCreator(MessageType.LOGIN);
+				pm.setFromUserID(message.getFromUserID());
+				pm.setFromUserName(userMap.get(message.getFromUserID()));
+				Message privateMessage = new Message(pm);
+				privateMessagesModel.addElement(privateMessage);
+				privateMessagesList.setModel(privateMessagesModel);
+				privateMessagesList.setCellRenderer(new MessageListCellRenderer());
+			}
+			else if(message.getContents().equals("Remove")) {
+				
+				userMap.remove(message.getFromUserID(), message.getFromUserName());
+
+
+				MessageCreator pm = new MessageCreator(MessageType.LOGIN);
+				pm.setFromUserID(message.getFromUserID());
+				pm.setFromUserName(userMap.get(message.getFromUserID()));
+				Message privateMessage = new Message(pm);
+				privateMessagesModel.removeElement(privateMessage);
+				
+			}
+		});
+	}
+	
 	protected void processAddUser(Message message) {
 
 	}
@@ -371,7 +402,7 @@ public class ClientUI extends JFrame {
 	protected void processChangePassword(Message message) {
 
 	}
-
+	
 	protected void processGetUserLogs(Message message) {
 		if (true) {
             SwingUtilities.invokeLater(() -> {
@@ -741,7 +772,7 @@ public class ClientUI extends JFrame {
 				JOptionPane.showMessageDialog(mainFrame, "Error deleting user: " + ex.getMessage(), "Error",
 						JOptionPane.ERROR_MESSAGE);
 			}
-			operationCheck = false;
+			// operationCheck = false;
 		};
 		showDoubleInputDialog("Delete User", "Username:", usernameField, "Password:", passwordField, actionListener);
 	}// doDeleteUser()

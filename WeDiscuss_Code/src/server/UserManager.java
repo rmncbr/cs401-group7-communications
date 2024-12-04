@@ -183,7 +183,7 @@ public class UserManager {
 	}
 
 	
-	public void addUser(ObjectOutputStream out, Message message)
+	public int addUser(ObjectOutputStream out, Message message)
 	{
 		try {
 
@@ -195,45 +195,50 @@ public class UserManager {
 			Send = new Message(create);// have message ready to return a deny
 			
 			
-			String input = message.getContents();
+			String password = message.getContents();
 			
 			//check for bad input
-			if (input == null)
+			if (password == null)
 			{
 				out.writeObject(Send); //send the deny message
-				return;
-			}
-			
-		    //split the given string by using space as delimiter
-		    String[] split = input.split("\\s+");
-		    //check for bad input (username, password, admin, userID)
-		    if (split.length != 4)
-		    {
-				out.writeObject(Send); //send the deny message
-				return;
-		    }
-		    
+				return -1;
+			}  
 		    
 		    //check if already exists
-		    if (validUsers.containsKey(split[0]))
+		    if (validUsers.containsKey(message.getToUserName()))
 		    {
 		    	out.writeObject(Send);
-		    	return;
+		    	return -1;
 		    }
-		    
+
+			//create user and add it to list of all users
+			User makeuser = new User(message.getToUserName(), password, false);
 		    //then add credentials to valid user map
-		    validUsers.put(split[0], split[1]); //add username and password to map
-			adminStatus.put(split[0], split[2]); //add admin status to username)
+		    validUsers.put(makeuser.getUsername(), makeuser.getPassword()); //add username and password to map
+		    
+			allUsernames.add(makeuser.getUsername()); // add to all Username map
+			allUsers.put(makeuser.getUsername(), makeuser);
+			allUserIDs.add(makeuser.getID());
+			
+			// adminStatus.put(token.get(0), token.get(2)); //add admin status to username
+			
+			userIDToUsername.put(makeuser.getID(),  makeuser.getUsername());
+			usernameToUserID.put(makeuser.getUsername(),  makeuser.getID());
+			
+		    
 		    create.setContents("Success");
 			Send = new Message(create);// create an accept message
 		    out.writeObject(Send); //send message
 		    modified = true;
+		    
+		    return makeuser.getID();
 		    
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
+		return -1;
 	}
 	
 	public void changeUserPassword(ObjectOutputStream out, Message message)
@@ -356,7 +361,7 @@ public class UserManager {
 		}
 	}
 	
-	public int deleteUser(ObjectOutputStream out, Message message)
+	public User deleteUser(ObjectOutputStream out, Message message)
 	{
 		try {
 			//message variable
@@ -367,28 +372,28 @@ public class UserManager {
 			Send = new Message(create);// have message ready to return a deny
 			
 			
-			String input = message.getContents();
+			String password = message.getContents();
 			
 			//check for bad input
-			if (input == null)
+			if (password == null)
 			{
 				out.writeObject(Send); //send the deny message
-				return -1;
+				return null;
 			}
 			
 		    //split the given string by using space as delimiter
-		    String[] split = input.split("\\s+");
+		    String removeName = message.getToUserName();
 		    //check for bad input (username)
-		    if (split.length != 1)
+		    if (removeName == null)
 		    {
 				out.writeObject(Send); //send the deny message
-				return -1;
+				return null;
 		    }
 		    
-		    String removeName = split[0];
 		    //check if already exists inorder to remove
-		    if (validUsers.containsKey(split[0]))
+		    if (validUsers.containsKey(removeName))
 		    {
+		    	User delUser = allUsers.get(removeName);
 		    	//get extra details of account being deleted
 		    	int removeID = getUserID(removeName);
 		    	
@@ -400,25 +405,27 @@ public class UserManager {
 		    	allUsers.remove(removeName);
 		    	validUsers.remove(removeName);
 		    	
+		    	/*
 		    	//return a success message
 		    	create.setContents("Success");
 				Send = new Message(create);// create an accept message
 		    	out.writeObject(Send);//send success message
+		    	*/
 		    	modified = true;
 		    	
 		    	//return the removed user id
-		    	return removeID;
+		    	return delUser;
 		    }
 		    
 		    out.writeObject(Send);
-		    return -1;//send deny if not an existing account
+		    return null;//send deny if not an existing account
 		    
 		}
 		catch(IOException e)
 		{
 			e.printStackTrace();
 		}
-		return -1;
+		return null;
 		
 	}
 	

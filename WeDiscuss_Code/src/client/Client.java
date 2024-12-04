@@ -201,6 +201,7 @@ public class Client {
 		}
 
 		messageCreator.setToUserName(userName);
+		messageCreator.setContents(password);
 		
 		sendMessage(messageCreator.createMessage());
 	}
@@ -215,6 +216,7 @@ public class Client {
 		}
 
 		messageCreator.setToUserName(userName);
+		messageCreator.setContents(password);
 		
 		sendMessage(messageCreator.createMessage());
 	}
