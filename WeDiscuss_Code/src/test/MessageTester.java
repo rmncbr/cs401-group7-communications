@@ -2,15 +2,18 @@ package test;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import server.User;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.Date;
-import java.util.ConcurrentHashMap;
-import java.util.ConcurrentMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import shared.*;
 
-public class MessageTest {
+public class MessageTester {
     private MessageCreator creator;
     private Message message;
     private User testUser;
@@ -24,12 +27,12 @@ public class MessageTest {
         creator = new MessageCreator(MessageType.UTU);
         creator.setContents("Test message");
         creator.setFromUserName("sender");
-        creator.setUserName("receiver");
+        creator.setToUserName("receiver");
         creator.setToUserID(2);
 
         //Initialize maps
         chatroomMap = new ConcurrentHashMap<>();
-        userMap = new ConcurrentMap<>();
+        userMap = new ConcurrentHashMap<>();
 
         //create test chatroom
         testChatroom = new Chatroom(1, 1);
@@ -52,7 +55,6 @@ public class MessageTest {
         assertNotNull(message, "Message should not be null");
         assertEquals("Test message", message.getContents());
         assertEquals("sender", message.getFromUserName());
-        assertEquals(1, message.getFromUserName());
         assertEquals("receiver", message.getToUserName());
         assertEquals(2, message.getToUserID());
         assertEquals(MessageType.UTU, message.getMessageType());
@@ -62,7 +64,7 @@ public class MessageTest {
     @Test
     public void testGetDataSent() {
         Date now = new Date();
-        assertTrue(Math.abs(getTime() - message.getDateSent().getTime()) < 1000,
+        assertTrue(Math.abs(now.getTime() - message.getDateSent().getTime()) < 1000,
             "Message date should be recent");
     }
 
@@ -126,11 +128,13 @@ public class MessageTest {
 
     @Test
     public void testStoreChatroomMessage() {
-        creator.setMessageType(MessageType.UTC);
+        MessageCreator utcCreator = new MessageCreator(MessageType.UTC);
         creator.setToChatroom(1);
         creator.setFromUserName("Jane");
         creator.setFromUserID(1);
         creator.setContents("Hello chatroom");
+        utcCreator.setUserMap(userMap);
+        utcCreator.setChatroomMap(chatroomMap);
         Message chatroomMessage = creator.createMessage();
 
         String stored = chatroomMessage.storeChatroomMessage();
@@ -147,12 +151,14 @@ public class MessageTest {
 
     @Test
     public void testStoreInboxMessage() {
-        creator.setMessageType(MessageType.UTU);
+        MessageCreator utuCreator = new MessageCreator(MessageType.UTU);
         creator.setContents("Hello inbox");
         creator.setToUserName("John");
         creator.setToUserID(2);
         creator.setFromUserName("Jane");
         creator.setFromUserID(1);
+        utuCreator.setUserMap(userMap);
+        utuCreator.setChatroomMap(chatroomMap);
         Message message = creator.createMessage();
 
         String stored = message.storeInboxMessage();
