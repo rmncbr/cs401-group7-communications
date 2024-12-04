@@ -251,7 +251,7 @@ public class ClientUI extends JFrame {
 					processUserMapUpdate(message);
 					break;
 				case UPDATECM:
-					processChatroomMapUpdate(message);
+					// processChatroomMapUpdate(message);
 					break;
 				default:
 					break;
@@ -375,6 +375,7 @@ public class ClientUI extends JFrame {
 				privateMessagesModel.addElement(privateMessage);
 				privateMessagesList.setModel(privateMessagesModel);
 				privateMessagesList.setCellRenderer(new MessageListCellRenderer());
+				
 			} else if (message.getContents().equals("Remove")) {
 
 				userMap.remove(message.getFromUserID(), message.getFromUserName());
