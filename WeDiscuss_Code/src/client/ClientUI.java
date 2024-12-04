@@ -379,14 +379,20 @@ public class ClientUI extends JFrame {
 			else if(message.getContents().equals("Remove")) {
 				
 				userMap.remove(message.getFromUserID(), message.getFromUserName());
+                // Update private messages list
+                privateMessagesModel.clear();
+                for (Integer userID : userMap.keySet()) {
+                    if (user.getID() == userID)
+                        continue; // skip self user cell
 
+                    createPrivateMessageArea(userID);
 
-				MessageCreator pm = new MessageCreator(MessageType.LOGIN);
-				pm.setFromUserID(message.getFromUserID());
-				pm.setFromUserName(userMap.get(message.getFromUserID()));
-				Message privateMessage = new Message(pm);
-				privateMessagesModel.removeElement(privateMessage);
-				
+                    MessageCreator pm = new MessageCreator(MessageType.LOGIN);
+                    pm.setFromUserID(userID);
+                    pm.setFromUserName(userMap.get(userID));
+                    Message privateMessage = new Message(pm);
+                    privateMessagesModel.addElement(privateMessage);
+                }
 			}
 		});
 	}

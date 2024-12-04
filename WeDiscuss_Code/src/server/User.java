@@ -57,8 +57,8 @@ public class User implements Serializable{
 			this.password = password;
 			this.adminStatus = adminStatus;
 			//increment ID Counter
-			IDCounter += 6;
-			this.ID = IDCounter+6;
+			IDCounter += 1;
+			this.ID = IDCounter;
 			
 			
 			this.status = false; //Initially offline
